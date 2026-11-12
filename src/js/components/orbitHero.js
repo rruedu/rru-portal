@@ -1,6 +1,6 @@
 /**
  * RRU School Portal - 360-degree Radial Orbit Hero Component
- * Enlarged orbit on mobile with clean header
+ * Displays on both Desktop and Mobile with full headers and fluid orbit
  */
 
 import { store } from '../state.js';
@@ -40,7 +40,7 @@ export function renderOrbitHero(container) {
 
       const count = counts[dept.name] || 0;
 
-      // Smart label formatting for clean multi-line wrap on mobile circles
+      // Smart label formatting for clean multi-line wrap
       let formattedName = dept.shortName;
       if (dept.id === 'student-affairs') formattedName = 'กิจการ<br/>นักเรียน';
       if (dept.id === 'personnel') formattedName = 'บริหาร<br/>งานบุคคล';
@@ -59,12 +59,12 @@ export function renderOrbitHero(container) {
           </div>
 
           <!-- Label -->
-          <span class="text-[11px] sm:text-xs font-bold text-purple-100 group-hover:text-pink-300 text-center leading-[1.15] sm:leading-tight px-0.5">
+          <span class="text-[10px] sm:text-xs font-bold text-purple-100 group-hover:text-pink-300 text-center leading-[1.15] sm:leading-tight px-0.5">
             ${formattedName}
           </span>
 
           <!-- Badge Count -->
-          <span class="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.2 rounded-full bg-pink-500/25 text-pink-300 font-mono font-bold mt-0.5 border border-pink-500/30">
+          <span class="text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.2 rounded-full bg-pink-500/25 text-pink-300 font-mono font-bold mt-0.5 border border-pink-500/30">
             ${count}
           </span>
         </div>
@@ -72,25 +72,25 @@ export function renderOrbitHero(container) {
     }).join('');
 
     container.innerHTML = `
-      <section class="relative py-2 sm:py-8 px-2 sm:px-4 overflow-hidden view-enter flex flex-col items-center justify-center">
+      <section class="relative py-3 sm:py-8 px-2 sm:px-4 overflow-hidden view-enter flex flex-col items-center justify-center">
         
-        <!-- Header Text (Hidden on mobile as requested by user, visible on sm: screens and above) -->
-        <div class="hidden sm:block text-center max-w-xl mx-auto mb-4 sm:mb-6">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-pink-500/10 border border-pink-500/25 text-pink-300 mb-2">
+        <!-- Header Text (Displayed on both Mobile and Desktop) -->
+        <div class="text-center max-w-xl mx-auto mb-3 sm:mb-6 px-3">
+          <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-pink-500/10 border border-pink-500/25 text-pink-300 mb-1.5">
             <span class="w-2 h-2 rounded-full bg-pink-400 animate-pulse"></span>
             ศูนย์รวมทุกระบบงาน รร.รัฐราษฎร์อุปถัมภ์
           </div>
-          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h2 class="text-xl sm:text-3xl font-extrabold tracking-tight">
             <span class="bg-gradient-to-r from-pink-400 via-fuchsia-300 to-purple-400 bg-clip-text text-transparent">
-              วงโคจร 5 กลุ่มบริหารสถานศึกษา
+              เลือกกลุ่มบริหารเพื่อเข้าใช้งาน
             </span>
           </h2>
           <p class="text-xs sm:text-sm text-purple-200/80 mt-1 max-w-sm mx-auto">
-            แตะที่กลุ่มฝ่ายรอบวงโคจร เพื่อเข้าสู่ระบบงานทั้งหมด
+            แตะที่กลุ่มฝ่ายเพื่อดูระบบงานและบริการออนไลน์ทั้งหมด
           </p>
         </div>
 
-        <!-- 360-degree Radial Orbit System (Enlarged on mobile) -->
+        <!-- 360-degree Radial Orbit System -->
         <div class="orbit-system">
           
           <!-- Orbit Background Rings -->

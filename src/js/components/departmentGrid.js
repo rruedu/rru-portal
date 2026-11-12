@@ -1,6 +1,6 @@
 /**
  * RRU School Portal - Focused Department & Search Results Cards View
- * Full-length titles without truncating or ellipsis (...)
+ * Clean navigation with a single bottom return button
  */
 
 import { store } from '../state.js';
@@ -122,11 +122,11 @@ export function renderDepartmentGrid(container) {
             ${filteredLinks.map(link => renderServiceCard(link, targetDept, isAdmin)).join('')}
           </div>
 
-          <!-- Bottom Return to Hub Banner -->
+          <!-- Single Clean Bottom Return to Hub Button -->
           <div class="mt-8 pt-6 border-t border-pink-500/15 text-center">
             <button 
               id="btn-bottom-back-hub" 
-              class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-lg shadow-pink-500/25 active:scale-95"
+              class="inline-flex items-center gap-2 px-7 py-3 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-sm font-bold transition-all cursor-pointer shadow-lg shadow-pink-500/25 active:scale-95"
             >
               <i data-lucide="home" class="w-4 h-4"></i>
               <span>หน้าหลัก</span>
@@ -145,16 +145,6 @@ export function renderDepartmentGrid(container) {
           </div>
         `}
 
-        <!-- Floating Action Button (FAB) at Bottom Right -->
-        <button 
-          id="fab-back-hub-btn" 
-          class="fab-back-btn flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-transform cursor-pointer border border-pink-300/40"
-          title="กลับหน้าวงโคจรหลัก"
-        >
-          <i data-lucide="home" class="w-4 h-4"></i>
-          <span>หน้าหลัก</span>
-        </button>
-
       </section>
     `;
 
@@ -165,8 +155,7 @@ export function renderDepartmentGrid(container) {
       container.querySelector('#btn-back-to-hub'),
       container.querySelector('#breadcrumb-hub'),
       container.querySelector('#btn-bottom-back-hub'),
-      container.querySelector('#btn-back-to-hub-empty'),
-      container.querySelector('#fab-back-hub-btn')
+      container.querySelector('#btn-back-to-hub-empty')
     ];
 
     returnActions.forEach(btn => {
