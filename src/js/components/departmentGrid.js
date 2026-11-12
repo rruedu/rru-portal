@@ -116,9 +116,9 @@ export function renderDepartmentGrid(container) {
           </div>
         </div>
 
-        <!-- Cards Grid (Full Title, No Truncate) -->
+        <!-- Cards Grid (2 Columns on Mobile, Up to 5 on Desktop) -->
         ${filteredLinks.length > 0 ? `
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
             ${filteredLinks.map((link, idx) => renderServiceCard(link, targetDept, isAdmin, idx)).join('')}
           </div>
 
@@ -213,12 +213,26 @@ export function renderDepartmentGrid(container) {
         href="${escapeHtml(link.link)}" 
         target="_blank" 
         rel="noopener noreferrer" 
-        class="service-app-card stagger-card glass-panel group relative flex flex-col justify-between p-4 sm:p-5 rounded-3xl block text-left border border-pink-500/25 hover:border-pink-500/50 shadow-md"
-        style="animation-delay: ${(index * 0.04).toFixed(2)}s;"
+        class="service-app-card stagger-card glass-panel group relative flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl block text-center sm:text-left border border-pink-500/25 hover:border-pink-500/50 active:scale-95 active:border-pink-400 active:shadow-pink-500/40 transition-all shadow-md select-none"
+        style="animation-delay: ${(index * 0.035).toFixed(2)}s;"
       >
-        <div class="flex items-start justify-between gap-3 mb-2">
-          <!-- Big 3D Squircle App Icon -->
-          <div class="app-icon-squircle w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+        <!-- Top Row: Role Badge & Quick Launch Icon -->
+        <div class="flex items-center justify-between gap-1 w-full mb-1 sm:mb-2">
+          <!-- Role Badge -->
+          <span class="text-[9px] sm:text-[11px] px-2 py-0.5 rounded-full border font-bold ${roleBadgeClass} truncate max-w-[85px] sm:max-w-none">
+            ${roleLabel}
+          </span>
+
+          <!-- Launch Arrow Badge -->
+          <div class="inline-flex items-center gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-pink-500/15 group-hover:bg-gradient-to-r group-hover:from-pink-500 group-hover:to-purple-600 text-pink-300 group-hover:text-white border border-pink-500/25 group-hover:border-transparent text-[9px] sm:text-xs font-bold transition-all shadow-sm">
+            <span class="hidden sm:inline">เปิด</span>
+            <i data-lucide="arrow-up-right" class="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- Center: Big 3D Squircle App Icon (Focal Point) -->
+        <div class="my-2 sm:my-3 flex justify-center items-center w-full">
+          <div class="app-icon-squircle w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 flex items-center justify-center relative overflow-hidden shadow-lg group-hover:scale-110 group-active:scale-95 transition-transform duration-200">
             ${iconUrl ? `
               <img 
                 src="${escapeHtml(iconUrl)}" 
@@ -230,52 +244,39 @@ export function renderDepartmentGrid(container) {
               <i data-lucide="${dept?.icon || 'layers'}" class="w-8 h-8 sm:w-10 sm:h-10 text-pink-400"></i>
             `}
           </div>
-
-          <!-- Top-Right: Role Badge & Quick Launch Pill -->
-          <div class="flex flex-col items-end gap-2 flex-shrink-0">
-            <span class="text-[10px] sm:text-xs px-2.5 py-0.5 sm:py-1 rounded-full border font-bold ${roleBadgeClass}">
-              ${roleLabel}
-            </span>
-
-            <!-- Quick Launch Badge -->
-            <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-pink-500/15 group-hover:bg-gradient-to-r group-hover:from-pink-500 group-hover:to-purple-600 text-pink-300 group-hover:text-white border border-pink-500/25 group-hover:border-transparent text-[10px] sm:text-xs font-bold transition-all shadow-sm group-hover:shadow-pink-500/30">
-              <span class="hidden sm:inline">เปิดระบบ</span>
-              <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
-            </div>
-          </div>
         </div>
 
-        <!-- Full Title & Details -->
-        <div class="mt-3 flex-1 flex flex-col justify-between">
+        <!-- Title & Information -->
+        <div class="mt-1 flex-1 flex flex-col justify-between">
           <div>
-            <h4 class="text-sm sm:text-base md:text-lg font-extrabold text-purple-100 group-hover:text-pink-300 transition-colors leading-snug break-words">
+            <h4 class="text-xs sm:text-sm md:text-base font-extrabold text-purple-100 group-hover:text-pink-300 transition-colors leading-snug break-words line-clamp-2 sm:line-clamp-none">
               ${escapeHtml(link.systemName)}
             </h4>
-            <span class="text-xs text-purple-300/70 mt-1 block">
+            <span class="text-[10px] sm:text-xs text-purple-300/70 mt-1 block">
               ${escapeHtml(link.group)}
             </span>
           </div>
 
           <!-- Domain Preview Footer -->
-          <div class="mt-3 pt-2.5 border-t border-pink-500/15 flex items-center justify-between text-[11px] font-mono text-purple-300/60">
-            <span class="truncate text-pink-400/80 font-medium flex items-center gap-1 max-w-[70%]">
-              <i data-lucide="link" class="w-3 h-3 flex-shrink-0"></i>
-              <span class="truncate">${formatDisplayUrl(link.link)}</span>
+          <div class="mt-2.5 pt-1.5 border-t border-pink-500/15 flex items-center justify-center sm:justify-between text-[10px] sm:text-[11px] font-mono text-purple-300/60 w-full overflow-hidden">
+            <span class="truncate text-pink-400/80 font-medium flex items-center gap-1 max-w-full">
+              <i data-lucide="link" class="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0"></i>
+              <span class="truncate text-[9px] sm:text-[11px]">${formatDisplayUrl(link.link)}</span>
             </span>
-            <span class="text-[10px] text-purple-400/40 group-hover:text-pink-300 transition-colors flex-shrink-0">
-              คลิกเปิด ➔
+            <span class="hidden sm:inline text-[10px] text-purple-400/40 group-hover:text-pink-300 transition-colors flex-shrink-0">
+              แตะเปิด ➔
             </span>
           </div>
         </div>
 
         ${isAdmin ? `
-          <div class="mt-3 pt-2.5 border-t border-pink-500/15 flex items-center justify-end gap-1.5" onclick="event.preventDefault(); event.stopPropagation();">
+          <div class="mt-2 pt-1.5 border-t border-pink-500/15 flex items-center justify-center sm:justify-end gap-1.5" onclick="event.preventDefault(); event.stopPropagation();">
             <button 
               data-row-index="${link.rowIndex}" 
               class="btn-admin-edit-link p-1.5 rounded-lg bg-purple-900/40 hover:bg-pink-600 text-purple-200 hover:text-white transition-all text-xs font-semibold" 
               title="แก้ไขลิงก์นี้"
             >
-              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              <i data-lucide="pencil" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
             </button>
             <button 
               data-row-index="${link.rowIndex}" 
@@ -283,7 +284,7 @@ export function renderDepartmentGrid(container) {
               class="btn-admin-delete-link p-1.5 rounded-lg bg-purple-900/40 hover:bg-rose-600 text-rose-300 hover:text-white transition-all text-xs font-semibold" 
               title="ลบลิงก์นี้"
             >
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <i data-lucide="trash-2" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
             </button>
           </div>
         ` : ''}
