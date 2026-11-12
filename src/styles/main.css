@@ -22,19 +22,19 @@
 }
 
 html.light {
-  /* Light Theme Palette */
-  --bg-primary: #fcf8fe;
-  --bg-secondary: #f5eaf7;
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --bg-card-hover: rgba(255, 255, 255, 1);
-  --border-subtle: rgba(217, 70, 239, 0.25);
-  --border-glow: rgba(217, 70, 239, 0.6);
+  /* Crisp Violet-Rose Executive Light Theme */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #ffffff;
+  --border-subtle: rgba(219, 39, 119, 0.18);
+  --border-glow: rgba(124, 58, 237, 0.45);
   
-  --text-main: #1e1333;
-  --text-muted: #4b5563;
-  --text-accent: #be185d;
+  --text-main: #1e1b4b;
+  --text-muted: #475569;
+  --text-accent: #db2777;
   
-  --glow-shadow: 0 10px 30px rgba(217, 70, 239, 0.18);
+  --glow-shadow: 0 10px 25px -3px rgba(124, 58, 237, 0.08), 0 4px 6px -2px rgba(219, 39, 119, 0.05);
 }
 
 body {
@@ -61,9 +61,10 @@ body {
 
 html.light .cyber-bg {
   background: 
-    radial-gradient(circle at 10% 20%, rgba(244, 114, 182, 0.2) 0%, transparent 45%),
-    radial-gradient(circle at 90% 30%, rgba(192, 132, 252, 0.2) 0%, transparent 45%),
-    linear-gradient(to bottom, #ffffff, #f7edf9);
+    radial-gradient(circle at 10% 10%, rgba(219, 39, 119, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 20%, rgba(124, 58, 237, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 50% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+    linear-gradient(to bottom, #ffffff, #f8f6fc);
 }
 
 /* Glassmorphism Styles */
@@ -77,7 +78,9 @@ html.light .cyber-bg {
 }
 
 html.light .glass-panel {
-  box-shadow: 0 8px 25px rgba(217, 70, 239, 0.1);
+  background-color: #ffffff !important;
+  border-color: rgba(219, 39, 119, 0.16) !important;
+  box-shadow: 0 4px 20px -2px rgba(124, 58, 237, 0.07), 0 2px 6px -1px rgba(219, 39, 119, 0.04) !important;
 }
 
 .glass-panel:hover {
@@ -93,52 +96,142 @@ html.light .glass-panel {
   transform: translateY(-4px) scale(1.015);
 }
 
+html.light .service-card {
+  background-color: #ffffff !important;
+  border-color: rgba(219, 39, 119, 0.18) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+html.light .service-card:hover {
+  border-color: rgba(219, 39, 119, 0.45) !important;
+  box-shadow: 0 10px 25px -3px rgba(124, 58, 237, 0.12), 0 4px 10px -2px rgba(219, 39, 119, 0.1) !important;
+}
+
 /* Comprehensive Light Theme Overrides */
 html.light .text-purple-100 {
-  color: #1e1333 !important;
+  color: #1e1b4b !important;
 }
 html.light .text-purple-200 {
-  color: #3b1d60 !important;
+  color: #334155 !important;
 }
 html.light .text-purple-300 {
-  color: #6b21a8 !important;
+  color: #475569 !important;
+}
+html.light .text-purple-400 {
+  color: #64748b !important;
 }
 html.light .text-purple-200\/70,
+html.light .text-purple-300\/80,
 html.light .text-purple-300\/70,
 html.light .text-purple-300\/60,
 html.light .text-purple-300\/50,
 html.light .text-purple-300\/40 {
-  color: #581c87 !important;
-  opacity: 0.85;
+  color: #64748b !important;
+  opacity: 1 !important;
 }
 
+html.light .text-pink-300,
+html.light .text-pink-400 {
+  color: #db2777 !important;
+}
+html.light .text-pink-200 {
+  color: #be185d !important;
+}
+
+/* Background elements in Light Theme */
 html.light .bg-purple-950\/40,
 html.light .bg-purple-950\/30,
 html.light .bg-purple-950\/20,
 html.light .bg-purple-900\/40,
-html.light .bg-purple-900\/20 {
-  background-color: rgba(243, 232, 255, 0.75) !important;
+html.light .bg-purple-900\/30,
+html.light .bg-purple-900\/20,
+html.light .bg-purple-950,
+html.light .bg-purple-900 {
+  background-color: #f8fafc !important;
 }
 
+html.light .bg-pink-500\/10,
+html.light .bg-pink-500\/15,
+html.light .bg-pink-500\/20,
+html.light .bg-pink-500\/25 {
+  background-color: rgba(236, 72, 153, 0.1) !important;
+}
+
+html.light .border-pink-500\/10,
 html.light .border-pink-500\/15,
 html.light .border-pink-500\/20,
 html.light .border-pink-500\/25,
-html.light .border-pink-500\/30 {
-  border-color: rgba(217, 70, 239, 0.35) !important;
+html.light .border-pink-500\/30,
+html.light .border-purple-500\/30 {
+  border-color: rgba(219, 39, 119, 0.2) !important;
 }
 
+/* Light Theme Navigation & Brand Gradient */
+html.light header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(219, 39, 119, 0.15) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light #nav-brand h1 {
+  background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Role Pills in Light Theme */
+html.light .role-pill-btn:not(.bg-gradient-to-r) {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+html.light .role-pill-btn:not(.bg-gradient-to-r):hover {
+  background-color: #e2e8f0 !important;
+  color: #1e1b4b !important;
+  border-color: rgba(219, 39, 119, 0.3) !important;
+}
+
+/* Inputs, Selects, and Textareas in Light Mode */
 html.light input,
 html.light select,
 html.light textarea {
   background-color: #ffffff !important;
-  color: #1e1333 !important;
-  border-color: rgba(217, 70, 239, 0.4) !important;
+  color: #1e1b4b !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light input:focus,
+html.light select:focus,
+html.light textarea:focus {
+  border-color: #d946ef !important;
+  box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.15) !important;
 }
 
 html.light input::placeholder,
 html.light textarea::placeholder {
-  color: #9333ea !important;
-  opacity: 0.5;
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* Orbit Nodes in Light Theme */
+html.light .orbit-node {
+  background-color: #ffffff !important;
+  border-color: rgba(219, 39, 119, 0.22) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07) !important;
+}
+html.light .orbit-node:hover {
+  border-color: #db2777 !important;
+  box-shadow: 0 10px 25px rgba(219, 39, 119, 0.18) !important;
+}
+html.light .orbit-node span {
+  color: #1e1b4b !important;
+}
+html.light #center-hub {
+  background-color: #ffffff !important;
+  border-color: rgba(219, 39, 119, 0.3) !important;
+  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.12) !important;
+}
+html.light #center-hub span {
+  color: #1e1b4b !important;
 }
 
 /* Floating Action Button (FAB) */
@@ -156,6 +249,14 @@ html.light textarea::placeholder {
   50% { transform: translateY(-5px); }
 }
 
+/* Slide-over Drawer Animation for Admin */
+.drawer-backdrop {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.drawer-content {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -170,4 +271,10 @@ html.light textarea::placeholder {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(236, 72, 153, 0.65);
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(219, 39, 119, 0.25);
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(219, 39, 119, 0.5);
 }

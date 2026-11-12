@@ -14,6 +14,15 @@ export function renderNavbar(container) {
     const state = store.get();
     const { config, activeRole, theme, isAdmin, searchQuery, currentView, activeDepartment } = state;
 
+    // In admin view, hide the public navbar so the dedicated admin header takes over
+    if (currentView === 'admin') {
+      container.classList.add('hidden');
+      container.innerHTML = '';
+      return;
+    }
+
+    container.classList.remove('hidden');
+
     const isSubView = currentView === 'department' || currentView === 'search';
 
     container.innerHTML = `
@@ -186,7 +195,7 @@ export function renderNavbar(container) {
     const adminBtn = container.querySelector('#btn-open-admin');
     if (adminBtn) {
       adminBtn.addEventListener('click', () => {
-        document.dispatchEvent(new CustomEvent('open-admin-modal'));
+        store.goToAdmin();
       });
     }
 

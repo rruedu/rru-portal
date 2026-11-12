@@ -9,8 +9,8 @@ export function renderAnnouncement(container) {
   if (!container) return;
 
   function update() {
-    const { config } = store.get();
-    if (!config.announcementEnabled || !config.announcementText) {
+    const { config, currentView } = store.get();
+    if (currentView === 'admin' || !config.announcementEnabled || !config.announcementText) {
       container.innerHTML = '';
       container.classList.add('hidden');
       return;

@@ -14,18 +14,20 @@ class StateStore {
         announcementText: 'ยินดีต้อนรับสู่ระบบรวมงานและบริการออนไลน์ โรงเรียนรัฐราษฎร์อุปถัมภ์',
         announcementEnabled: true
       },
-      currentView: 'hub', // 'hub' | 'department' | 'search'
+      currentView: 'hub', // 'hub' | 'department' | 'search' | 'admin'
       activeRole: 'all',
       activeDepartment: null, // dept id, e.g. 'academic'
       searchQuery: '',
-      theme: localStorage.getItem('rru_theme') || 'dark',
+      theme: (typeof localStorage !== 'undefined' ? localStorage.getItem('rru_theme') : 'dark') || 'dark',
       isAdmin: false,
       adminPin: '',
       isLoading: true
     };
 
     this.listeners = new Set();
-    this.initRouter();
+    if (typeof window !== 'undefined') {
+      this.initRouter();
+    }
   }
 
   get() {
@@ -59,6 +61,8 @@ class StateStore {
         if (!this.state.searchQuery) {
           this.set({ currentView: 'hub', activeDepartment: null });
         }
+      } else if (hash === 'admin') {
+        this.set({ currentView: 'admin', activeDepartment: null, searchQuery: '' });
       } else {
         this.set({ currentView: 'department', activeDepartment: hash });
       }
@@ -69,15 +73,27 @@ class StateStore {
   }
 
   goToHub() {
-    window.location.hash = '';
+    if (typeof window !== 'undefined') {
+      window.location.hash = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     this.set({ currentView: 'hub', activeDepartment: null, searchQuery: '' });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  goToAdmin() {
+    if (typeof window !== 'undefined') {
+      window.location.hash = 'admin';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    this.set({ currentView: 'admin', activeDepartment: null, searchQuery: '' });
   }
 
   goToDepartment(deptId) {
-    window.location.hash = deptId;
+    if (typeof window !== 'undefined') {
+      window.location.hash = deptId;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     this.set({ currentView: 'department', activeDepartment: deptId, searchQuery: '' });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   setSearchQuery(query) {
@@ -85,7 +101,9 @@ class StateStore {
       this.set({ searchQuery: query.trim(), currentView: 'search' });
     } else {
       const hash = window.location.hash.replace('#', '').trim();
-      if (hash && hash !== 'hub') {
+      if (hash === 'admin') {
+        this.set({ searchQuery: '', currentView: 'admin', activeDepartment: null });
+      } else if (hash && hash !== 'hub') {
         this.set({ searchQuery: '', currentView: 'department', activeDepartment: hash });
       } else {
         this.set({ searchQuery: '', currentView: 'hub', activeDepartment: null });
@@ -96,17 +114,20 @@ class StateStore {
   setTheme(theme) {
     const validTheme = theme === 'light' ? 'light' : 'dark';
     this.set({ theme: validTheme });
-    localStorage.setItem('rru_theme', validTheme);
-    
-    if (validTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('rru_theme', validTheme);
     }
     
-    document.documentElement.setAttribute('data-theme', validTheme);
+    if (typeof document !== 'undefined') {
+      if (validTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+      } else {
+        document.documentElement.classList.remove('light');
+        document.documentElement.classList.add('dark');
+      }
+      document.documentElement.setAttribute('data-theme', validTheme);
+    }
   }
 
   toggleTheme() {

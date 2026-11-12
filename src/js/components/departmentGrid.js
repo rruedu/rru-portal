@@ -13,8 +13,8 @@ export function renderDepartmentGrid(container) {
   function update() {
     const { links, activeRole, activeDepartment, searchQuery, currentView, isAdmin } = store.get();
 
-    // If on home/hub view, hide cards completely
-    if (currentView === 'hub') {
+    // If on home/hub view or admin view, hide cards completely
+    if (currentView === 'hub' || currentView === 'admin') {
       container.classList.add('hidden');
       container.innerHTML = '';
       return;

@@ -44,5 +44,21 @@ _Avoid_: Single-page scroll, Accordion list
 The capability allowing users to install the portal onto Android and iOS home screens with full standalone display.
 _Avoid_: App Store download, APK
 
+**Dedicated Admin Dashboard (แผงควบคุมระบบแอดมิน)**:
+A full-screen dedicated management workspace (`#admin`) providing administrative control over all school portal services, branding, and announcements, replacing cramped modal popups.
+_Avoid_: Settings popup, Admin dialog
+
+**Link Management Directory (ศูนย์จัดการระบบงาน)**:
+The comprehensive CRUD interface inside the admin dashboard displaying all Google Sheets service links with real-time filtering, adding, in-place editing, and deletion capabilities.
+_Avoid_: URL list, Bookmark manager
+
+**Mobile Hamburger Drawer (เมนูแฮมเบอร์เกอร์แอดมิน)**:
+The mobile-exclusive left slide-out navigation drawer allowing smooth switching between admin management sections without cluttering the screen.
+_Avoid_: Dropdown menu, Context menu
+
+**Light Theme Color Harmony (ธีมสว่างพาเลตต์พรีเมียม)**:
+A crisp Violet-Rose executive palette for daylight usage featuring pure white cards, high-contrast typography, and vibrant accents without murky alpha washes.
+_Avoid_: Gray mode, White inversion
+
 
 

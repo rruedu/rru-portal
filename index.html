@@ -69,7 +69,7 @@
 <body class="selection:bg-pink-500 selection:text-white">
 
   <!-- Initial Fullscreen Loading Screen -->
-  <div id="initial-loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0616] transition-opacity duration-500">
+  <div id="initial-loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-500" style="background-color: var(--bg-primary);">
     <div class="relative w-16 h-16 sm:w-20 sm:h-20 mb-4">
       <div class="absolute inset-0 rounded-full border-2 border-pink-500/20"></div>
       <div class="absolute inset-0 rounded-full border-2 border-t-pink-500 border-r-purple-500 animate-spin"></div>
@@ -98,6 +98,9 @@
 
     <!-- View 2: Focused Department & Search Results Cards (Active on Click) -->
     <div id="departments-container" class="hidden"></div>
+
+    <!-- View 3: Dedicated Admin Dashboard View (#admin) -->
+    <div id="admin-view-container" class="hidden"></div>
   </main>
 
   <!-- Footer -->
