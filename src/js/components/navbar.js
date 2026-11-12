@@ -16,11 +16,11 @@ export function renderNavbar(container) {
     container.innerHTML = `
       <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-opacity-80 border-b border-pink-500/15 transition-all duration-300" style="background-color: var(--bg-card);">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center justify-between h-16 sm:h-20 gap-3">
+          <div class="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-3">
             
             <!-- School Brand / Logo -->
-            <div class="flex items-center gap-3 cursor-pointer group flex-shrink-0" id="nav-brand">
-              <div class="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-pink-500 to-purple-500 shadow-md group-hover:scale-105 transition-transform">
+            <div class="flex items-center gap-2.5 sm:gap-3 cursor-pointer group flex-shrink-0" id="nav-brand">
+              <div class="relative w-9 h-9 sm:w-12 sm:h-12 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-pink-500 to-purple-500 shadow-md group-hover:scale-105 transition-transform">
                 <img 
                   src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" 
                   alt="${escapeHtml(config.schoolName)}" 
@@ -29,60 +29,71 @@ export function renderNavbar(container) {
                 />
               </div>
               <div class="leading-tight">
-                <h1 class="text-base sm:text-lg font-bold bg-gradient-to-r from-pink-400 via-fuchsia-300 to-purple-300 bg-clip-text text-transparent truncate max-w-[180px] sm:max-w-xs md:max-w-md">
+                <h1 class="text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-pink-400 via-fuchsia-300 to-purple-300 bg-clip-text text-transparent truncate max-w-[140px] sm:max-w-xs md:max-w-md">
                   ${escapeHtml(config.schoolName)}
                 </h1>
-                <p class="text-[11px] sm:text-xs text-purple-300/70 hidden sm:block truncate">
+                <p class="text-[10px] sm:text-xs text-purple-300/70 hidden sm:block truncate">
                   ${escapeHtml(config.schoolSubtitle)}
                 </p>
               </div>
             </div>
 
             <!-- Instant Search Bar -->
-            <div class="flex-1 max-w-xs sm:max-w-sm md:max-w-md mx-2">
+            <div class="flex-1 max-w-[170px] sm:max-w-sm md:max-w-md mx-1 sm:mx-2">
               <div class="relative">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-pink-400/60"></i>
+                <i data-lucide="search" class="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-pink-400/60"></i>
                 <input 
                   type="text" 
                   id="nav-search-input" 
                   value="${escapeHtml(searchQuery)}"
-                  placeholder="ค้นหาระบบงานหรือบริการ..." 
-                  class="w-full pl-9 pr-8 py-2 rounded-xl text-xs sm:text-sm bg-purple-950/30 border border-pink-500/20 focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20 placeholder-purple-300/40 text-purple-100 transition-all"
+                  placeholder="ค้นหาระบบงาน..." 
+                  class="w-full pl-8 sm:pl-9 pr-7 sm:pr-8 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm bg-purple-950/30 border border-pink-500/20 focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20 placeholder-purple-300/40 text-purple-100 transition-all"
                 />
                 ${searchQuery ? `
-                  <button id="nav-search-clear" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-purple-300/60 hover:text-pink-300">
+                  <button id="nav-search-clear" class="absolute right-2 top-1/2 -translate-y-1/2 text-purple-300/60 hover:text-pink-300 p-0.5">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                   </button>
                 ` : ''}
               </div>
             </div>
 
-            <!-- Right Controls: Theme Toggle & Admin Login -->
-            <div class="flex items-center gap-2 flex-shrink-0">
+            <!-- Right Controls: Install App, Theme Toggle, Admin Login -->
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              
+              <!-- Install App Button (PWA Add to Home Screen) -->
+              <button 
+                id="btn-install-app" 
+                class="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border border-pink-500/30 bg-gradient-to-r from-pink-600/30 to-purple-600/30 hover:from-pink-600 hover:to-purple-600 text-pink-200 hover:text-white text-xs font-semibold transition-all shadow-sm"
+                title="ติดตั้งแอปลงหน้าจอมือถือ (iOS / Android)"
+              >
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span class="hidden md:inline">ติดตั้งแอป</span>
+              </button>
+
               <!-- Theme Toggle -->
               <button 
                 id="btn-toggle-theme" 
-                class="p-2 sm:p-2.5 rounded-xl border border-pink-500/20 hover:border-pink-500/50 bg-purple-900/20 text-pink-300 hover:text-pink-100 transition-all"
+                class="p-1.5 sm:p-2 rounded-xl border border-pink-500/20 hover:border-pink-500/50 bg-purple-900/20 text-pink-300 hover:text-pink-100 transition-all"
                 title="เปลี่ยนโหมดสี (Dark / Light)"
               >
-                <i data-lucide="${theme === 'dark' ? 'sun' : 'moon'}" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                <i data-lucide="${theme === 'dark' ? 'sun' : 'moon'}" class="w-4 h-4"></i>
               </button>
 
               <!-- Admin Control Button -->
               <button 
                 id="btn-open-admin" 
-                class="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2 rounded-xl border ${isAdmin ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white border-pink-400' : 'border-pink-500/30 bg-purple-950/40 text-pink-300 hover:border-pink-500'} text-xs sm:text-sm font-medium transition-all shadow-sm hover:shadow-pink-500/20"
+                class="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2 rounded-xl border ${isAdmin ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white border-pink-400' : 'border-pink-500/30 bg-purple-950/40 text-pink-300 hover:border-pink-500'} text-xs font-medium transition-all shadow-sm"
                 title="${isAdmin ? 'เปิดเมนูผู้ดูแลระบบ' : 'เข้าสู่ระบบแอดมิน'}"
               >
                 <i data-lucide="${isAdmin ? 'shield-check' : 'lock'}" class="w-4 h-4"></i>
-                <span class="hidden md:inline">${isAdmin ? 'จัดการระบบ' : 'แอดมิน'}</span>
+                <span class="hidden lg:inline">${isAdmin ? 'จัดการระบบ' : 'แอดมิน'}</span>
               </button>
             </div>
 
           </div>
 
           <!-- Role Filter Pill Bar -->
-          <div class="flex items-center justify-start sm:justify-center gap-1.5 sm:gap-2 pb-3 overflow-x-auto no-scrollbar pt-1">
+          <div class="flex items-center justify-start sm:justify-center gap-1.5 sm:gap-2 pb-2.5 overflow-x-auto no-scrollbar pt-1">
             <span class="text-xs text-purple-300/60 flex items-center gap-1 mr-1 flex-shrink-0 hidden lg:flex">
               <i data-lucide="filter" class="w-3.5 h-3.5"></i> บทบาท:
             </span>
@@ -114,15 +125,14 @@ export function renderNavbar(container) {
     const brand = container.querySelector('#nav-brand');
     if (brand) {
       brand.addEventListener('click', () => {
-        store.set({ activeDepartment: null, activeRole: 'all', searchQuery: '' });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        store.goToHub();
       });
     }
 
     const searchInput = container.querySelector('#nav-search-input');
     if (searchInput) {
       searchInput.addEventListener('input', debounce((e) => {
-        store.setSearchQuery(e.target.value.trim());
+        store.setSearchQuery(e.target.value);
       }, 200));
     }
 
@@ -130,6 +140,13 @@ export function renderNavbar(container) {
     if (searchClear) {
       searchClear.addEventListener('click', () => {
         store.setSearchQuery('');
+      });
+    }
+
+    const installBtn = container.querySelector('#btn-install-app');
+    if (installBtn) {
+      installBtn.addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('trigger-pwa-install'));
       });
     }
 

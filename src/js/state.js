@@ -14,8 +14,9 @@ class StateStore {
         announcementText: 'ยินดีต้อนรับสู่ระบบรวมงานและบริการออนไลน์ โรงเรียนรัฐราษฎร์อุปถัมภ์',
         announcementEnabled: true
       },
+      currentView: 'hub', // 'hub' | 'department' | 'search'
       activeRole: 'all',
-      activeDepartment: null, // null means all or not focused
+      activeDepartment: null, // dept id, e.g. 'academic'
       searchQuery: '',
       theme: localStorage.getItem('rru_theme') || 'dark',
       isAdmin: false,
@@ -24,6 +25,7 @@ class StateStore {
     };
 
     this.listeners = new Set();
+    this.initRouter();
   }
 
   get() {
@@ -50,6 +52,46 @@ class StateStore {
     }
   }
 
+  initRouter() {
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '').trim();
+      if (!hash || hash === 'hub') {
+        if (!this.state.searchQuery) {
+          this.set({ currentView: 'hub', activeDepartment: null });
+        }
+      } else {
+        this.set({ currentView: 'department', activeDepartment: hash });
+      }
+    };
+
+    window.addEventListener('hashchange', handleHash);
+    // Initial check on load
+    setTimeout(handleHash, 50);
+  }
+
+  goToHub() {
+    window.location.hash = '';
+    this.set({ currentView: 'hub', activeDepartment: null, searchQuery: '' });
+  }
+
+  goToDepartment(deptId) {
+    window.location.hash = deptId;
+    this.set({ currentView: 'department', activeDepartment: deptId, searchQuery: '' });
+  }
+
+  setSearchQuery(query) {
+    if (query && query.trim()) {
+      this.set({ searchQuery: query.trim(), currentView: 'search' });
+    } else {
+      const hash = window.location.hash.replace('#', '').trim();
+      if (hash && hash !== 'hub') {
+        this.set({ searchQuery: '', currentView: 'department', activeDepartment: hash });
+      } else {
+        this.set({ searchQuery: '', currentView: 'hub', activeDepartment: null });
+      }
+    }
+  }
+
   setTheme(theme) {
     this.set({ theme });
     localStorage.setItem('rru_theme', theme);
@@ -64,16 +106,6 @@ class StateStore {
 
   setActiveRole(role) {
     this.set({ activeRole: role });
-  }
-
-  setActiveDepartment(deptId) {
-    // If clicking same department, toggle off
-    const next = this.state.activeDepartment === deptId ? null : deptId;
-    this.set({ activeDepartment: next });
-  }
-
-  setSearchQuery(query) {
-    this.set({ searchQuery: query });
   }
 
   setAdmin(isAdmin, pin = '') {

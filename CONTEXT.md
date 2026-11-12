@@ -36,4 +36,13 @@ _Avoid_: Menu wheel, Pie chart
 A configurable header bar displaying important real-time school news or urgent notices.
 _Avoid_: Marquee, Breaking news
 
+**Two-View Navigation (สลับมุมมองสองระดับ)**:
+The UX architecture separating the clean Orbit Hub home screen from the focused Department / Search view.
+_Avoid_: Single-page scroll, Accordion list
+
+**PWA Home Screen Installation (ติดตั้งลงหน้าจอโฮม)**:
+The capability allowing users to install the portal onto Android and iOS home screens with full standalone display.
+_Avoid_: App Store download, APK
+
+
 

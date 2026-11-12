@@ -9,6 +9,7 @@ import { renderNavbar } from './components/navbar.js';
 import { renderOrbitHero } from './components/orbitHero.js';
 import { renderDepartmentGrid } from './components/departmentGrid.js';
 import { renderAdminModal } from './components/adminModal.js';
+import { initPwaInstall } from './components/installModal.js';
 import { refreshIcons } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -16,16 +17,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentTheme = store.get().theme;
   store.setTheme(currentTheme);
 
-  // 2. Mount UI Components
+  // 2. Register Service Worker for PWA (if supported)
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('./sw.js');
+    } catch (e) {
+      console.log('SW registration note:', e);
+    }
+  }
+
+  // 3. Mount UI Components
   renderAnnouncement(document.getElementById('announcement-container'));
   renderNavbar(document.getElementById('navbar-container'));
   renderOrbitHero(document.getElementById('orbit-container'));
   renderDepartmentGrid(document.getElementById('departments-container'));
   renderAdminModal(document.getElementById('admin-modal-container'));
+  initPwaInstall(document.getElementById('pwa-modal-container'));
 
   refreshIcons();
 
-  // 3. Fetch Live Portal Data
+  // 4. Fetch Live Portal Data
   try {
     const data = await fetchPortalData();
     if (data) {
@@ -40,7 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     store.set({ isLoading: false });
   }
 
-  // Remove loading screen if present
+  // Remove initial loading screen
   const loader = document.getElementById('initial-loader');
   if (loader) {
     loader.classList.add('opacity-0', 'pointer-events-none');

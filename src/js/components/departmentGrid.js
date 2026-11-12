@@ -1,5 +1,5 @@
 /**
- * RRU School Portal - Department Cards Grid Component
+ * RRU School Portal - Focused Department & Search Results Cards View
  */
 
 import { store } from '../state.js';
@@ -10,111 +10,131 @@ export function renderDepartmentGrid(container) {
   if (!container) return;
 
   function update() {
-    const { links, activeRole, activeDepartment, searchQuery, isAdmin } = store.get();
+    const { links, activeRole, activeDepartment, searchQuery, currentView, isAdmin } = store.get();
+
+    // If on home/hub view, hide cards completely
+    if (currentView === 'hub') {
+      container.classList.add('hidden');
+      container.innerHTML = '';
+      return;
+    }
+
+    container.classList.remove('hidden');
 
     // Filter links based on Role and Search Query
     const query = (searchQuery || '').toLowerCase();
+
+    let targetDept = null;
+    if (currentView === 'department' && activeDepartment) {
+      targetDept = CONFIG.DEPARTMENTS.find(d => d.id === activeDepartment) || null;
+    }
 
     const filteredLinks = links.filter(item => {
       // Role filter
       const matchRole = activeRole === 'all' || item.role === 'all' || item.role === activeRole;
       if (!matchRole) return false;
 
-      // Search filter
+      // Department filter
+      if (targetDept && item.group !== targetDept.name) {
+        return false;
+      }
+
+      // Search query filter
       if (query) {
         const inName = (item.systemName || '').toLowerCase().includes(query);
         const inGroup = (item.group || '').toLowerCase().includes(query);
         return inName || inGroup;
       }
+
       return true;
     });
 
-    // Check which departments to show
-    let departmentsToShow = CONFIG.DEPARTMENTS;
-    if (activeDepartment) {
-      departmentsToShow = CONFIG.DEPARTMENTS.filter(d => d.id === activeDepartment);
-    }
-
-    // Build department sections
-    let totalDisplayed = 0;
-    const sectionsMarkup = departmentsToShow.map(dept => {
-      const deptLinks = filteredLinks.filter(l => l.group === dept.name);
-      totalDisplayed += deptLinks.length;
-
-      // If activeDepartment is null and this department has 0 links during search, we can omit it
-      if (query && deptLinks.length === 0) {
-        return '';
-      }
-
-      return `
-        <div class="mb-10 sm:mb-14 scroll-mt-24" id="dept-sec-${dept.id}">
-          
-          <!-- Department Header -->
-          <div class="flex items-center justify-between pb-3 mb-5 border-b border-pink-500/15">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr ${dept.color} flex items-center justify-center text-white shadow-md shadow-pink-500/20">
-                <i data-lucide="${dept.icon}" class="w-4 h-4 sm:w-5 sm:h-5"></i>
-              </div>
-              <div>
-                <h3 class="text-base sm:text-lg font-bold text-purple-100 flex items-center gap-2">
-                  ${escapeHtml(dept.name)}
-                  <span class="text-xs px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-normal">
-                    ${deptLinks.length}
-                  </span>
-                </h3>
-                <p class="text-xs text-purple-300/60 hidden sm:block">${dept.description}</p>
-              </div>
-            </div>
-
-            ${activeDepartment === dept.id ? `
-              <button 
-                id="btn-show-all-depts" 
-                class="flex items-center gap-1 text-xs text-pink-400 hover:text-pink-200 bg-pink-950/40 px-3 py-1.5 rounded-lg border border-pink-500/25 transition-all"
-              >
-                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> แสดงทุกฝ่าย
-              </button>
-            ` : ''}
-          </div>
-
-          <!-- Cards Grid -->
-          ${deptLinks.length > 0 ? `
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              ${deptLinks.map(link => renderServiceCard(link, dept, isAdmin)).join('')}
-            </div>
-          ` : `
-            <div class="py-8 text-center text-sm text-purple-300/50 bg-purple-950/20 rounded-2xl border border-dashed border-pink-500/20">
-              <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-pink-400/40"></i>
-              ไม่มีระบบงานที่ตรงกับเงื่อนไขการค้นหาในกลุ่มนี้
-            </div>
-          `}
-
-        </div>
-      `;
-    }).join('');
-
     container.innerHTML = `
-      <section id="departments-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        ${sectionsMarkup || `
-          <div class="py-16 text-center bg-purple-950/20 rounded-3xl border border-dashed border-pink-500/30">
-            <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-3 text-pink-400/50"></i>
-            <h4 class="text-lg font-bold text-purple-200">ไม่พบระบบงานที่ค้นหา</h4>
-            <p class="text-xs sm:text-sm text-purple-300/60 mt-1">ลองเปลี่ยนคำค้นหา หรือสลับบทบาทผู้ใช้งาน</p>
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 view-enter">
+        
+        <!-- Header Banner with Back Button -->
+        <div class="glass-panel p-4 sm:p-6 rounded-3xl mb-6 sm:mb-8 border border-pink-500/20 relative overflow-hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            
+            <div class="flex items-center gap-3 sm:gap-4">
+              <!-- Back to Hub Button -->
+              <button 
+                id="btn-back-to-hub" 
+                class="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl bg-pink-500/15 hover:bg-pink-500/30 text-pink-300 hover:text-white border border-pink-500/30 transition-all text-xs sm:text-sm font-semibold flex-shrink-0 group"
+                title="ย้อนกลับไปหน้าวงโคจรหลัก"
+              >
+                <i data-lucide="chevron-left" class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"></i>
+                <span>กลับหน้าหลัก</span>
+              </button>
+
+              <div class="min-w-0">
+                ${targetDept ? `
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-gradient-to-r ${targetDept.color} text-white font-medium">
+                      ${targetDept.shortName}
+                    </span>
+                    <span class="text-xs text-purple-300/60 font-mono">${filteredLinks.length} บริการ</span>
+                  </div>
+                  <h3 class="text-lg sm:text-2xl font-bold text-purple-100 truncate mt-1">
+                    ${escapeHtml(targetDept.name)}
+                  </h3>
+                  <p class="text-xs text-purple-300/70 hidden sm:block mt-0.5">
+                    ${targetDept.description}
+                  </p>
+                ` : `
+                  <div class="text-xs text-pink-400 font-medium">ผลการค้นหาสำหรับ</div>
+                  <h3 class="text-lg sm:text-2xl font-bold text-purple-100 truncate mt-0.5">
+                    "${escapeHtml(searchQuery)}"
+                  </h3>
+                  <p class="text-xs text-purple-300/70">พบ ${filteredLinks.length} ระบบงานที่ตรงกับคำค้นหา</p>
+                `}
+              </div>
+            </div>
+
+            <!-- Role Indicator -->
+            <div class="flex items-center gap-2 self-start sm:self-auto text-xs text-purple-300/70 bg-purple-950/40 px-3 py-1.5 rounded-xl border border-pink-500/15">
+              <i data-lucide="filter" class="w-3.5 h-3.5 text-pink-400"></i>
+              <span>บทบาท: <b class="text-purple-100">${CONFIG.ROLES.find(r => r.id === activeRole)?.label || 'ทั้งหมด'}</b></span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Cards Grid -->
+        ${filteredLinks.length > 0 ? `
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            ${filteredLinks.map(link => renderServiceCard(link, targetDept, isAdmin)).join('')}
+          </div>
+        ` : `
+          <div class="py-16 text-center bg-purple-950/20 rounded-3xl border border-dashed border-pink-500/25">
+            <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-pink-400/50"></i>
+            <h4 class="text-base sm:text-lg font-bold text-purple-200">ไม่พบระบบงานในบทบาทหรือเงื่อนไขนี้</h4>
+            <p class="text-xs sm:text-sm text-purple-300/60 mt-1 max-w-sm mx-auto">
+              ลองสลับปุ่มบทบาท (นักเรียน / ผู้ปกครอง / ครู) ด้านบน หรือกดกลับหน้าหลัก
+            </p>
+            <button id="btn-back-to-hub-empty" class="mt-4 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold inline-flex items-center gap-1.5">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i> กลับหน้าวงโคจรหลัก
+            </button>
           </div>
         `}
+
       </section>
     `;
 
     refreshIcons(container);
 
     // Event Bindings
-    const showAllBtn = container.querySelector('#btn-show-all-depts');
-    if (showAllBtn) {
-      showAllBtn.addEventListener('click', () => {
-        store.setActiveDepartment(null);
-      });
+    const backBtn = container.querySelector('#btn-back-to-hub');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => store.goToHub());
     }
 
-    // Admin action buttons on cards
+    const backBtnEmpty = container.querySelector('#btn-back-to-hub-empty');
+    if (backBtnEmpty) {
+      backBtnEmpty.addEventListener('click', () => store.goToHub());
+    }
+
+    // Admin Card Actions
     if (isAdmin) {
       const editBtns = container.querySelectorAll('.btn-admin-edit-link');
       editBtns.forEach(btn => {
@@ -164,9 +184,7 @@ export function renderDepartmentGrid(container) {
         rel="noopener noreferrer" 
         class="service-card glass-panel group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl block text-left"
       >
-        <!-- Top bar of card -->
         <div class="flex items-start justify-between gap-3 mb-3">
-          <!-- Icon -->
           <div class="w-12 h-12 rounded-xl overflow-hidden p-1 bg-gradient-to-tr from-pink-500/20 to-purple-500/20 border border-pink-500/30 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             ${link.iconUrl ? `
               <img 
@@ -176,11 +194,10 @@ export function renderDepartmentGrid(container) {
                 onerror="this.onerror=null; this.parentElement.innerHTML='<i data-lucide=\\'layers\\' class=\\'w-6 h-6 text-pink-400\\'></i>'; window.lucide && window.lucide.createIcons();"
               />
             ` : `
-              <i data-lucide="${dept.icon}" class="w-6 h-6 text-pink-400"></i>
+              <i data-lucide="${dept?.icon || 'layers'}" class="w-6 h-6 text-pink-400"></i>
             `}
           </div>
 
-          <!-- Role Badge -->
           <div class="flex items-center gap-1.5">
             <span class="text-[10px] px-2 py-0.5 rounded-full border font-medium ${roleBadgeClass}">
               ${roleLabel}
@@ -191,17 +208,15 @@ export function renderDepartmentGrid(container) {
           </div>
         </div>
 
-        <!-- System Title -->
         <div class="mt-1 flex-1">
           <h4 class="text-sm sm:text-base font-bold text-purple-100 group-hover:text-pink-300 transition-colors line-clamp-2">
             ${escapeHtml(link.systemName)}
           </h4>
           <span class="text-[11px] text-purple-300/50 mt-1 block truncate">
-            ${escapeHtml(dept.name)}
+            ${escapeHtml(link.group)}
           </span>
         </div>
 
-        <!-- Admin Quick Action Toolbar -->
         ${isAdmin ? `
           <div class="mt-3 pt-2.5 border-t border-pink-500/15 flex items-center justify-end gap-1.5" onclick="event.preventDefault(); event.stopPropagation();">
             <button 

@@ -2,9 +2,18 @@
 <html lang="th" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>RRU Portal - โรงเรียนรัฐราษฎร์อุปถัมภ์</title>
   <meta name="description" content="ระบบรวมงานและบริการออนไลน์ โรงเรียนรัฐราษฎร์อุปถัมภ์ (RRU All-in-One Service Portal)" />
+  
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#ec4899" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RRU Portal" />
+  <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Seal_of_the_Ministry_of_Education_of_Thailand.svg/192px-Seal_of_the_Ministry_of_Education_of_Thailand.svg.png" />
   <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Seal_of_the_Ministry_of_Education_of_Thailand.svg/200px-Seal_of_the_Ministry_of_Education_of_Thailand.svg.png" />
 
   <!-- Google Fonts: Prompt -->
@@ -45,15 +54,15 @@
 
   <!-- Initial Fullscreen Loading Screen -->
   <div id="initial-loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0616] transition-opacity duration-500">
-    <div class="relative w-20 h-20 mb-4">
+    <div class="relative w-16 h-16 sm:w-20 sm:h-20 mb-4">
       <div class="absolute inset-0 rounded-full border-2 border-pink-500/20"></div>
       <div class="absolute inset-0 rounded-full border-2 border-t-pink-500 border-r-purple-500 animate-spin"></div>
       <div class="absolute inset-3 rounded-full bg-gradient-to-tr from-pink-500/20 to-purple-600/20 flex items-center justify-center">
         <span class="text-xs font-bold text-pink-300">RRU</span>
       </div>
     </div>
-    <div class="text-sm font-medium bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-      กำลังโหลดระบบรวมงาน RRU Portal...
+    <div class="text-xs sm:text-sm font-medium bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+      กำลังเปิดระบบรวมงาน RRU Portal...
     </div>
   </div>
 
@@ -67,31 +76,34 @@
   <div id="navbar-container"></div>
 
   <!-- Main Content Layout -->
-  <main class="relative z-10 min-h-[calc(100vh-140px)]">
-    <!-- Radial Orbit Hero Section -->
+  <main class="relative z-10 min-h-[calc(100vh-140px)] flex flex-col justify-center">
+    <!-- View 1: Radial Orbit Hero (Clean Minimalist Gateway) -->
     <div id="orbit-container"></div>
 
-    <!-- Department Cards Section -->
-    <div id="departments-container"></div>
+    <!-- View 2: Focused Department & Search Results Cards (Active on Click) -->
+    <div id="departments-container" class="hidden"></div>
   </main>
 
   <!-- Footer -->
-  <footer class="relative z-10 border-t border-pink-500/15 py-8 mt-12 bg-purple-950/20 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-purple-300/60 space-y-2">
+  <footer class="relative z-10 border-t border-pink-500/15 py-6 sm:py-8 mt-12 bg-purple-950/20 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-purple-300/60 space-y-1.5">
       <p class="font-medium text-purple-200">
         โรงเรียนรัฐราษฎร์อุปถัมภ์ &bull; สังกัดสำนักงานเขตพื้นที่การศึกษามัธยมศึกษา
       </p>
-      <p>
-        RRU All-in-One Service Portal &bull; ออกแบบเพื่อการเข้าถึงข้อมูลและบริการทางการศึกษาอย่างไร้รอยต่อ
+      <p class="text-[11px] sm:text-xs">
+        RRU All-in-One Service Portal &bull; ศูนย์กลางเชื่อมโยงทุกบริการดิจิทัลของสถานศึกษา
       </p>
-      <div class="pt-2 text-[11px] text-purple-300/40">
-        Hosted with GitHub Pages &bull; Powered by Google Apps Script & Google Sheets
+      <div class="pt-1 text-[10px] text-purple-300/40">
+        Hosted on GitHub Pages &bull; Backend with Google Apps Script
       </div>
     </div>
   </footer>
 
   <!-- Admin Control Panel Modal Container -->
   <div id="admin-modal-container" class="hidden"></div>
+
+  <!-- PWA Install Guide Modal Container -->
+  <div id="pwa-modal-container" class="hidden"></div>
 
   <!-- Toast Notifications Anchor -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
