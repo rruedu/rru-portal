@@ -60,5 +60,9 @@ _Avoid_: Dropdown menu, Context menu
 A crisp Violet-Rose executive palette for daylight usage featuring pure white cards, high-contrast typography, and vibrant accents without murky alpha washes.
 _Avoid_: Gray mode, White inversion
 
+**Service Icon Upload (อัปโหลดไอคอนระบบงาน)**:
+The direct client-to-cloud asset upload workflow that scales and compresses application icon images to 512x512 pixels before depositing them into the school's `RRU_Portal_Assets` Google Drive folder.
+_Avoid_: External image hosting, Raw binary paste
+
 
 

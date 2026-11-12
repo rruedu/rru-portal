@@ -6,7 +6,7 @@
 import { store } from '../state.js';
 import { CONFIG } from '../config.js';
 import { callGasApi } from '../api.js';
-import { escapeHtml, refreshIcons, showToast, normalizeDriveImage } from '../utils.js';
+import { escapeHtml, refreshIcons, showToast, normalizeDriveImage, compressImage } from '../utils.js';
 
 export function renderAdminView(container) {
   if (!container) return;
@@ -371,6 +371,7 @@ export function renderAdminView(container) {
   // --- TAB 1: Links Management Directory (Add, Edit, Delete) ---
   function renderLinksManagementTab(state) {
     const { links } = state;
+    const currentIconUrl = editingLink ? normalizeDriveImage(editingLink.rawIconUrl || editingLink.iconUrl || '') : '';
 
     // Filter links according to search & filter dropdowns
     const query = linkSearchQuery.toLowerCase().trim();
@@ -472,15 +473,81 @@ export function renderAdminView(container) {
               />
             </div>
 
-            <div class="sm:col-span-2">
-              <label class="block text-xs font-semibold text-purple-200 mb-1">URL ไอคอน หรือ ลิงก์ Google Drive (ไม่บังคับ)</label>
-              <input 
-                type="text" 
-                id="field-link-icon-url" 
-                value="${editingLink ? escapeHtml(editingLink.rawIconUrl || editingLink.iconUrl) : ''}" 
-                placeholder="https://drive.google.com/file/d/... หรือ URL รูปภาพ" 
-                class="w-full px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none font-mono"
-              />
+            <!-- Dual-Mode Icon Uploader & Preview -->
+            <div class="sm:col-span-2 p-3.5 sm:p-4 rounded-2xl bg-purple-950/30 border border-pink-500/20 space-y-3">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-semibold text-purple-200">
+                  รูปไอคอนระบบงาน (Service Icon)
+                </label>
+                <span class="text-[10px] text-pink-300 font-medium">
+                  อัปโหลดไฟล์ตรงจากเครื่อง หรือระบุ URL
+                </span>
+              </div>
+
+              <div class="flex flex-col sm:flex-row items-center gap-4">
+                <!-- Preview Thumbnail Box -->
+                <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-purple-900/40 border-2 border-pink-500/30 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <img 
+                    id="link-icon-preview-img" 
+                    src="${currentIconUrl}" 
+                    alt="Icon Preview" 
+                    class="w-full h-full object-contain p-1.5 ${currentIconUrl ? '' : 'hidden'}" 
+                  />
+                  <div id="link-icon-placeholder" class="text-center p-1 ${currentIconUrl ? 'hidden' : 'block'}">
+                    <i data-lucide="image-plus" class="w-6 h-6 sm:w-7 sm:h-7 text-pink-400/60 mx-auto mb-0.5"></i>
+                    <span class="text-[9px] text-purple-300/60 block leading-tight">ไม่มีไอคอน</span>
+                  </div>
+                  
+                  <!-- Clear Icon Button -->
+                  <button 
+                    type="button" 
+                    id="btn-clear-link-icon" 
+                    class="absolute top-1 right-1 p-1 rounded-full bg-rose-950/80 hover:bg-rose-600 text-rose-300 hover:text-white transition-all text-xs cursor-pointer ${currentIconUrl ? '' : 'hidden'}"
+                    title="ลบไอคอนออก"
+                  >
+                    <i data-lucide="x" class="w-3 h-3"></i>
+                  </button>
+                </div>
+
+                <!-- Upload Controls & Input -->
+                <div class="flex-1 w-full space-y-2">
+                  <!-- File Upload Button -->
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <input 
+                      type="file" 
+                      id="field-link-icon-file" 
+                      accept="image/*" 
+                      class="hidden" 
+                    />
+                    <button 
+                      type="button" 
+                      id="btn-trigger-icon-upload"
+                      class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-xs shadow-md shadow-pink-500/25 transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                      <span id="label-icon-upload-text">📁 อัปโหลดรูปภาพไอคอน</span>
+                    </button>
+
+                    <span class="text-[11px] text-purple-300/60">
+                      (ย่อขนาด 512x512 และเก็บใน Google Drive อัตโนมัติ)
+                    </span>
+                  </div>
+
+                  <!-- Fallback URL Input -->
+                  <div class="space-y-1">
+                    <div class="text-[11px] text-purple-300/70 font-medium">
+                      หรือระบุ URL รูปภาพ / ลิงก์ Google Drive โดยตรง:
+                    </div>
+                    <input 
+                      type="text" 
+                      id="field-link-icon-url" 
+                      value="${editingLink ? escapeHtml(editingLink.rawIconUrl || editingLink.iconUrl) : ''}" 
+                      placeholder="https://drive.google.com/thumbnail?id=... หรือ URL รูปภาพ" 
+                      class="w-full px-3 py-2 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs focus:border-pink-500 focus:outline-none font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="sm:col-span-2 flex items-center justify-end gap-2 pt-2">
@@ -943,6 +1010,105 @@ export function renderAdminView(container) {
       });
     }
 
+    // Icon Upload Trigger & Live Preview
+    const triggerUploadBtn = container.querySelector('#btn-trigger-icon-upload');
+    const fileInput = container.querySelector('#field-link-icon-file');
+    const urlInput = container.querySelector('#field-link-icon-url');
+    const previewImg = container.querySelector('#link-icon-preview-img');
+    const placeholder = container.querySelector('#link-icon-placeholder');
+    const clearBtn = container.querySelector('#btn-clear-link-icon');
+    const labelUploadText = container.querySelector('#label-icon-upload-text');
+
+    if (triggerUploadBtn && fileInput) {
+      triggerUploadBtn.addEventListener('click', () => {
+        fileInput.click();
+      });
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        triggerUploadBtn.disabled = true;
+        if (labelUploadText) labelUploadText.textContent = 'กำลังย่อขนาดภาพ...';
+        showToast(`กำลังเตรียมรูปไอคอน ${file.name}...`, 'info', 4000);
+
+        try {
+          // 1. Client-side canvas resize & compression to max 512x512
+          const compressedBase64 = await compressImage(file, 512);
+
+          if (labelUploadText) labelUploadText.textContent = 'กำลังส่งขึ้น Drive...';
+          const { adminPin } = store.get();
+
+          // 2. Upload to Google Drive via GAS API
+          const cleanFileName = 'icon_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const res = await callGasApi('uploadImage', {
+            pin: adminPin,
+            base64: compressedBase64,
+            fileName: cleanFileName,
+            mimeType: 'image/png',
+            targetType: 'icon'
+          });
+
+          // 3. Set the direct thumbnail URL in the input
+          const driveThumbnailUrl = res.url || `https://drive.google.com/thumbnail?id=${res.fileId}&sz=w300`;
+          if (urlInput) {
+            urlInput.value = driveThumbnailUrl;
+          }
+
+          // 4. Update preview
+          if (previewImg && placeholder && clearBtn) {
+            previewImg.src = driveThumbnailUrl;
+            previewImg.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            clearBtn.classList.remove('hidden');
+          }
+
+          showToast('อัปโหลดไอคอนขึ้น Google Drive สำเร็จเรียบร้อย!', 'success');
+        } catch (err) {
+          showToast(`อัปโหลดไอคอนไม่สำเร็จ: ${err.message}`, 'error');
+        } finally {
+          triggerUploadBtn.disabled = false;
+          if (labelUploadText) labelUploadText.textContent = '📁 อัปโหลดรูปภาพไอคอน';
+          fileInput.value = '';
+        }
+      });
+    }
+
+    // URL input live change preview
+    if (urlInput) {
+      urlInput.addEventListener('input', (e) => {
+        const val = normalizeDriveImage(e.target.value.trim());
+        if (previewImg && placeholder && clearBtn) {
+          if (val) {
+            previewImg.src = val;
+            previewImg.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            clearBtn.classList.remove('hidden');
+          } else {
+            previewImg.src = '';
+            previewImg.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            clearBtn.classList.add('hidden');
+          }
+        }
+      });
+    }
+
+    // Clear icon button
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        if (urlInput) urlInput.value = '';
+        if (previewImg) {
+          previewImg.src = '';
+          previewImg.classList.add('hidden');
+        }
+        if (placeholder) placeholder.classList.remove('hidden');
+        clearBtn.classList.add('hidden');
+      });
+    }
+
     // Link Action Form Submit (Add or Update)
     const linkForm = container.querySelector('#admin-link-action-form');
     if (linkForm) {
@@ -953,7 +1119,8 @@ export function renderAdminView(container) {
         const role = container.querySelector('#field-link-role').value;
         const systemName = container.querySelector('#field-link-system-name').value.trim();
         const link = container.querySelector('#field-link-target-url').value.trim();
-        const iconUrl = container.querySelector('#field-link-icon-url').value.trim();
+        const rawIconUrl = container.querySelector('#field-link-icon-url').value.trim();
+        const iconUrl = normalizeDriveImage(rawIconUrl);
 
         const submitBtn = container.querySelector('#btn-save-link-action');
         submitBtn.disabled = true;

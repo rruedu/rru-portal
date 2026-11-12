@@ -90,6 +90,48 @@ export function debounce(func, wait = 250) {
 }
 
 /**
+ * Compress & resize image client-side to fit within max dimensions (512x512)
+ * Returns Promise<string> (Base64 dataURL in PNG format)
+ */
+export function compressImage(file, maxDimension = 512) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) {
+      reject(new Error('ไฟล์ที่เลือกไม่ใช่รูปภาพที่รองรับ'));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('ไม่สามารถอ่านไฟล์รูปภาพได้'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('ไม่สามารถโหลดภาพสำหรับย่อขนาดได้'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, width);
+        canvas.height = Math.max(1, height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Export as PNG to preserve transparent backgrounds
+        const dataUrl = canvas.toDataURL('image/png');
+        resolve(dataUrl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
  * Re-render all Lucide icons inside element
  */
 export function refreshIcons(root = document) {
