@@ -6,7 +6,7 @@
 import { store } from '../state.js';
 import { CONFIG } from '../config.js';
 import { callGasApi } from '../api.js';
-import { escapeHtml, refreshIcons, showToast, normalizeDriveImage, compressImage } from '../utils.js';
+import { escapeHtml, refreshIcons, showToast, normalizeDriveImage, compressImage, formatDisplayUrl } from '../utils.js';
 
 export function renderAdminView(container) {
   if (!container) return;
@@ -412,7 +412,7 @@ export function renderAdminView(container) {
         </div>
 
         <!-- Add / Edit Link Form Card -->
-        <div id="admin-link-form-card" class="glass-panel p-4 sm:p-6 rounded-3xl border ${editingLink ? 'border-amber-400/50 bg-amber-950/10' : 'border-pink-500/20'} ${isAddFormVisible || editingLink ? 'block' : 'hidden'} transition-all">
+        <div id="admin-link-form-card" class="glass-panel p-4 sm:p-6 rounded-3xl border ${editingLink ? 'border-amber-400/50 bg-amber-950/10' : 'border-pink-500/20'} ${isAddFormVisible || editingLink ? 'block' : 'hidden'} transition-all w-full min-w-0 overflow-hidden">
           
           <div class="flex items-center justify-between pb-3 mb-4 border-b border-pink-500/15">
             <h3 class="text-sm sm:text-base font-bold ${editingLink ? 'text-amber-300' : 'text-pink-300'} flex items-center gap-2">
@@ -427,21 +427,21 @@ export function renderAdminView(container) {
             ` : ''}
           </div>
 
-          <form id="admin-link-action-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <form id="admin-link-action-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
             <input type="hidden" id="field-link-row-index" value="${editingLink ? editingLink.rowIndex : ''}" />
 
-            <div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-purple-200 mb-1">กลุ่มบริหาร (ฝ่ายงาน) *</label>
-              <select id="field-link-group" required class="w-full px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none">
+              <select id="field-link-group" required class="w-full min-w-0 px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none">
                 ${CONFIG.DEPARTMENTS.map(d => `
                   <option value="${d.name}" ${editingLink && editingLink.group === d.name ? 'selected' : ''}>${d.name}</option>
                 `).join('')}
               </select>
             </div>
 
-            <div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-purple-200 mb-1">บทบาทผู้ใช้งานที่มองเห็น *</label>
-              <select id="field-link-role" required class="w-full px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none">
+              <select id="field-link-role" required class="w-full min-w-0 px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none">
                 <option value="all" ${editingLink && editingLink.role === 'all' ? 'selected' : ''}>ทุกคน (นักเรียน, ผู้ปกครอง, ครู)</option>
                 <option value="student" ${editingLink && editingLink.role === 'student' ? 'selected' : ''}>เฉพาะนักเรียน</option>
                 <option value="parent" ${editingLink && editingLink.role === 'parent' ? 'selected' : ''}>เฉพาะผู้ปกครอง</option>
@@ -449,7 +449,7 @@ export function renderAdminView(container) {
               </select>
             </div>
 
-            <div class="sm:col-span-2">
+            <div class="sm:col-span-2 min-w-0">
               <label class="block text-xs font-semibold text-purple-200 mb-1">ชื่อระบบงาน / บริการ *</label>
               <input 
                 type="text" 
@@ -457,11 +457,11 @@ export function renderAdminView(container) {
                 required 
                 value="${editingLink ? escapeHtml(editingLink.systemName) : ''}" 
                 placeholder="เช่น ระบบงานทะเบียนและวัดผล, ระบบเช็คชื่อนักเรียน" 
-                class="w-full px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none"
+                class="w-full min-w-0 px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none"
               />
             </div>
 
-            <div class="sm:col-span-2">
+            <div class="sm:col-span-2 min-w-0">
               <label class="block text-xs font-semibold text-purple-200 mb-1">URL ปลายทางของระบบ *</label>
               <input 
                 type="url" 
@@ -469,12 +469,12 @@ export function renderAdminView(container) {
                 required 
                 value="${editingLink ? escapeHtml(editingLink.link) : ''}" 
                 placeholder="https://script.google.com/... หรือ https://..." 
-                class="w-full px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none font-mono"
+                class="w-full min-w-0 px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none font-mono"
               />
             </div>
 
             <!-- Dual-Mode Icon Uploader & Preview -->
-            <div class="sm:col-span-2 p-3.5 sm:p-4 rounded-2xl bg-purple-950/30 border border-pink-500/20 space-y-3">
+            <div class="sm:col-span-2 min-w-0 p-3.5 sm:p-4 rounded-2xl bg-purple-950/30 border border-pink-500/20 space-y-3">
               <div class="flex items-center justify-between">
                 <label class="block text-xs font-semibold text-purple-200">
                   รูปไอคอนระบบงาน (Service Icon)
@@ -636,71 +636,82 @@ export function renderAdminView(container) {
                 const iconUrl = normalizeDriveImage(item.iconUrl || item.icon_url || '');
 
                 return `
-                  <div class="glass-panel p-3.5 sm:p-4 rounded-2xl border border-pink-500/20 hover:border-pink-500/40 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div class="glass-panel p-3.5 sm:p-4 rounded-2xl border border-pink-500/20 hover:border-pink-500/40 transition-all flex flex-col gap-2.5 w-full min-w-0 overflow-hidden">
                     
-                    <!-- Left: Icon & Details -->
-                    <div class="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                    <!-- Top: Icon, Badges, Title -->
+                    <div class="flex items-start gap-3 w-full min-w-0">
                       <!-- Icon / Thumbnail -->
-                      <div class="w-12 h-12 rounded-xl overflow-hidden bg-purple-950/40 border border-pink-500/20 flex items-center justify-center flex-shrink-0">
+                      <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-purple-950/40 border border-pink-500/20 flex items-center justify-center flex-shrink-0 shadow-sm">
                         ${iconUrl ? `
                           <img src="${iconUrl}" alt="${escapeHtml(item.systemName)}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Seal_of_the_Ministry_of_Education_of_Thailand.svg/200px-Seal_of_the_Ministry_of_Education_of_Thailand.svg.png';" />
                         ` : `
                           <div class="w-full h-full bg-gradient-to-tr ${targetDept.color} flex items-center justify-center text-white">
-                            <i data-lucide="${targetDept.icon}" class="w-6 h-6"></i>
+                            <i data-lucide="${targetDept.icon}" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                           </div>
                         `}
                       </div>
 
-                      <!-- Info -->
+                      <!-- Title & Badges -->
                       <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2 flex-wrap mb-1">
-                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 font-medium border border-pink-500/25">
+                        <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 font-medium border border-pink-500/25 whitespace-nowrap">
                             ${escapeHtml(item.group)}
                           </span>
-                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 font-medium border border-purple-500/25">
+                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 font-medium border border-purple-500/25 whitespace-nowrap">
                             สำหรับ: ${roleLabel}
                           </span>
-                          <span class="text-[9px] font-mono text-purple-300/50">
-                            (แถว #${item.rowIndex})
+                          <span class="text-[9px] font-mono text-purple-300/50 ml-auto sm:ml-0">
+                            #${item.rowIndex}
                           </span>
                         </div>
 
-                        <h4 class="text-sm font-bold text-purple-100 truncate">
+                        <h4 class="text-xs sm:text-sm font-bold text-purple-100 leading-snug break-words">
                           ${escapeHtml(item.systemName)}
                         </h4>
-
-                        <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-pink-400/80 hover:text-pink-300 font-mono truncate block max-w-md hover:underline flex items-center gap-1 mt-0.5">
-                          <i data-lucide="external-link" class="w-3 h-3 flex-shrink-0"></i>
-                          <span class="truncate">${escapeHtml(item.link)}</span>
-                        </a>
                       </div>
                     </div>
 
-                    <!-- Right: Action Buttons (Edit & Delete) -->
-                    <div class="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
+                    <!-- Bottom: Clean Shortened URL Badge & Actions (Never Overflows) -->
+                    <div class="pt-2 border-t border-pink-500/15 flex items-center justify-between gap-2 w-full min-w-0 flex-wrap sm:flex-nowrap">
                       
-                      <!-- Edit Button -->
-                      <button 
-                        data-action="edit" 
-                        data-row-index="${item.rowIndex}"
-                        class="btn-action-edit px-3 py-1.5 rounded-xl bg-purple-900/40 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/30 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-                        title="แก้ไขข้อมูลระบบนี้"
+                      <!-- URL Chip -->
+                      <a 
+                        href="${escapeHtml(item.link)}" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        class="min-w-0 flex-1 max-w-full sm:max-w-md inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-950/40 hover:bg-pink-600/20 text-pink-300 hover:text-white border border-pink-500/20 text-[11px] font-mono transition-colors group/link overflow-hidden"
+                        title="คลิกเพื่อเปิดดูลิงก์: ${escapeHtml(item.link)}"
                       >
-                        <i data-lucide="edit-3" class="w-3.5 h-3.5 text-pink-300"></i>
-                        <span>แก้ไข</span>
-                      </button>
+                        <i data-lucide="link" class="w-3.5 h-3.5 flex-shrink-0 text-pink-400"></i>
+                        <span class="truncate block min-w-0 text-[10px] sm:text-xs font-mono font-medium">${escapeHtml(formatDisplayUrl(item.link))}</span>
+                        <i data-lucide="external-link" class="w-3 h-3 flex-shrink-0 opacity-50 group-hover/link:opacity-100 ml-auto"></i>
+                      </a>
 
-                      <!-- Delete Button -->
-                      <button 
-                        data-action="delete" 
-                        data-row-index="${item.rowIndex}"
-                        data-system-name="${escapeHtml(item.systemName)}"
-                        class="btn-action-delete px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-                        title="ลบระบบนี้ออกจากระบบ"
-                      >
-                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        <span>ลบ</span>
-                      </button>
+                      <!-- Action Buttons: Edit & Delete -->
+                      <div class="flex items-center gap-1.5 flex-shrink-0 ml-auto sm:ml-0">
+                        <!-- Edit Button -->
+                        <button 
+                          data-action="edit" 
+                          data-row-index="${item.rowIndex}"
+                          class="btn-action-edit px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-900/40 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/30 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+                          title="แก้ไขข้อมูลระบบนี้"
+                        >
+                          <i data-lucide="edit-3" class="w-3.5 h-3.5 text-pink-300"></i>
+                          <span>แก้ไข</span>
+                        </button>
+
+                        <!-- Delete Button -->
+                        <button 
+                          data-action="delete" 
+                          data-row-index="${item.rowIndex}"
+                          data-system-name="${escapeHtml(item.systemName)}"
+                          class="btn-action-delete px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+                          title="ลบระบบนี้ออกจากระบบ"
+                        >
+                          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                          <span>ลบ</span>
+                        </button>
+                      </div>
 
                     </div>
 

@@ -132,6 +132,24 @@ export function compressImage(file, maxDimension = 512) {
 }
 
 /**
+ * Format long URLs into clean, readable display text (e.g. domain/path...)
+ */
+export function formatDisplayUrl(rawUrl) {
+  if (!rawUrl) return '-';
+  try {
+    const u = new URL(rawUrl);
+    let hostname = u.hostname.replace(/^www\./, '');
+    let pathname = u.pathname;
+    if (pathname.length > 24) {
+      pathname = pathname.slice(0, 12) + '…' + pathname.slice(-8);
+    }
+    return hostname + (pathname === '/' ? '' : pathname);
+  } catch (e) {
+    return rawUrl.length > 32 ? rawUrl.slice(0, 16) + '…' + rawUrl.slice(-12) : rawUrl;
+  }
+}
+
+/**
  * Re-render all Lucide icons inside element
  */
 export function refreshIcons(root = document) {

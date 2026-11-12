@@ -190,6 +190,18 @@ html.light .role-pill-btn:not(.bg-gradient-to-r):hover {
   border-color: rgba(219, 39, 119, 0.3) !important;
 }
 
+/* URL Chip in Light Theme */
+html.light a.group\/link {
+  background-color: #f8f6fc !important;
+  border-color: rgba(219, 39, 119, 0.25) !important;
+  color: #be185d !important;
+}
+html.light a.group\/link:hover {
+  background-color: #fae8ff !important;
+  border-color: rgba(219, 39, 119, 0.45) !important;
+  color: #9d174d !important;
+}
+
 /* Inputs, Selects, and Textareas in Light Mode */
 html.light input,
 html.light select,
