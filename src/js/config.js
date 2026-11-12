@@ -3,9 +3,8 @@
  */
 
 export const CONFIG = {
-  // Replace with your Google Apps Script Web App Deployment URL
-  // Example: https://script.google.com/macros/s/AKfycb.../exec
-  GAS_API_URL: 'https://script.google.com/macros/s/AKfycbwcd_XDkJzj38Pn3BR9Lmzg4UdDbBwe_D_WKVVxO8G3xsu4fI0Lu3vV5Y1hfqNG2LFEkg/exec',
+  // Google Apps Script Web App Deployment URL
+  GAS_API_URL: 'https://script.google.com/macros/s/AKfycbxjtVo6iXnW4QiJ1autnb7kSxy9ylQCeom-geZtx0H8hcC8jXFjDj3eDL_W7-mMCZ3X1Q/exec',
 
   SPREADSHEET_ID: '1BgKm3XODUIBZNkxMGUWbEGBlxYRNYi_Z2YxoCu9XQ3M',
   SCRIPT_ID: '1XsqUQrMGNawiUWrtoMhetapokBqT26V4voFfSh0UpYP-h4Ff47bhYhHP',
