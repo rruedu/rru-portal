@@ -13,6 +13,8 @@ export const CONFIG = {
     name: 'โรงเรียนรัฐราษฎร์อุปถัมภ์',
     shortName: 'RRU',
     subtitle: 'ระบบรวมงานและบริการสารสนเทศออนไลน์ (All-in-One Portal)',
+    affiliation: 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาราชบุรี',
+    developer: 'ครูไตรรัตน์ จันทร์มาศ',
     logoDefault: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Seal_of_the_Ministry_of_Education_of_Thailand.svg/200px-Seal_of_the_Ministry_of_Education_of_Thailand.svg.png'
   },
 

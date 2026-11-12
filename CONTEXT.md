@@ -1,6 +1,6 @@
 # RRU School Portal
 
-Centralized web portal and service gateway for Rattharat Upatham School (โรงเรียนรัฐราษฎร์อุปถัมภ์ - RRU) providing unified access to school applications, tools, and services for students, parents, and teachers.
+Centralized web portal and service gateway for Rattharat Upatham School (โรงเรียนรัฐราษฎร์อุปถัมภ์ - RRU), under the Secondary Educational Service Area Office Ratchaburi (สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาราชบุรี), providing unified access to school applications, tools, and services for students, parents, and teachers. Developed by ครูไตรรัตน์ จันทร์มาศ.
 
 ## Language
 
