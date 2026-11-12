@@ -46,10 +46,10 @@ export function renderNavbar(container) {
                     />
                   </div>
                   <div class="leading-tight">
-                    <h1 class="text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-pink-400 via-fuchsia-300 to-purple-300 bg-clip-text text-transparent truncate max-w-[130px] sm:max-w-xs md:max-w-md">
+                    <h1 class="text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-pink-400 via-fuchsia-300 to-purple-300 bg-clip-text text-transparent leading-tight">
                       ${escapeHtml(config.schoolName)}
                     </h1>
-                    <p class="text-[10px] sm:text-xs text-purple-300/70 hidden sm:block truncate">
+                    <p class="text-[10px] sm:text-xs text-purple-300/80 hidden sm:block">
                       ${escapeHtml(config.schoolSubtitle)}
                     </p>
                   </div>

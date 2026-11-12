@@ -2,15 +2,23 @@
 
 :root {
   --orbit-radius: 215px;
-  --node-size: 120px;
+  --node-size: 122px;
   --hub-size: 145px;
 }
 
 @media (max-width: 640px) {
   :root {
-    --orbit-radius: 136px;
-    --node-size: 82px;
-    --hub-size: 102px;
+    --orbit-radius: 138px;
+    --node-size: 88px;
+    --hub-size: 104px;
+  }
+}
+
+@media (max-width: 380px) {
+  :root {
+    --orbit-radius: 128px;
+    --node-size: 84px;
+    --hub-size: 96px;
   }
 }
 
@@ -29,8 +37,8 @@
 
 @media (max-width: 640px) {
   .orbit-system {
-    max-width: 380px;
-    height: 380px;
+    max-width: 390px;
+    height: 390px;
   }
 }
 
@@ -110,8 +118,9 @@ html.light .center-hub {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 4px;
   cursor: pointer;
-  background: rgba(24, 14, 46, 0.92);
+  background: rgba(24, 14, 46, 0.94);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 2px solid rgba(236, 72, 153, 0.45);

@@ -1,6 +1,6 @@
 /**
  * RRU School Portal - Unified Radial Orbit Hero Component
- * Displays on both Desktop and Mobile with enlarged, high-contrast touch nodes
+ * Displays on both Desktop and Mobile with enlarged, untruncated touch nodes
  */
 
 import { store } from '../state.js';
@@ -47,13 +47,13 @@ export function renderOrbitHero(container) {
           style="--cos: ${cosVal}; --sin: ${sinVal};"
           title="${escapeHtml(dept.name)} (${count} บริการ) - แตะเพื่อเปิดดู"
         >
-          <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr ${dept.color} flex items-center justify-center text-white mb-0.5 sm:mb-1 shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+          <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr ${dept.color} flex items-center justify-center text-white mb-1 shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
             <i data-lucide="${dept.icon}" class="w-4 h-4 sm:w-6 sm:h-6"></i>
           </div>
-          <span class="text-[10px] sm:text-xs font-bold text-purple-200 group-hover:text-pink-300 text-center leading-tight max-w-[74px] sm:max-w-[95px] truncate px-0.5">
+          <span class="text-xs sm:text-sm font-bold text-purple-100 group-hover:text-pink-300 text-center leading-tight whitespace-normal break-words px-1">
             ${dept.shortName}
           </span>
-          <span class="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.2 rounded-full bg-pink-500/25 text-pink-300 font-mono font-semibold mt-0.5 border border-pink-500/30">
+          <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-pink-500/25 text-pink-300 font-mono font-bold mt-1 border border-pink-500/30">
             ${count}
           </span>
         </div>
@@ -65,16 +65,16 @@ export function renderOrbitHero(container) {
         
         <!-- Header Text -->
         <div class="text-center max-w-xl mx-auto mb-3 sm:mb-6">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-pink-500/10 border border-pink-500/25 text-pink-300 mb-2">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-pink-500/10 border border-pink-500/25 text-pink-300 mb-2">
             <span class="w-2 h-2 rounded-full bg-pink-400 animate-pulse"></span>
             ศูนย์รวมทุกระบบงาน รร.รัฐราษฎร์อุปถัมภ์
           </div>
-          <h2 class="text-xl sm:text-3xl font-extrabold tracking-tight">
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
             <span class="bg-gradient-to-r from-pink-400 via-fuchsia-300 to-purple-400 bg-clip-text text-transparent">
               เลือกกลุ่มบริหารเพื่อเข้าใช้งาน
             </span>
           </h2>
-          <p class="text-xs text-purple-200/70 mt-1 max-w-sm mx-auto">
+          <p class="text-xs sm:text-sm text-purple-200/80 mt-1 max-w-sm mx-auto">
             แตะที่กลุ่มฝ่ายรอบวงโคจร เพื่อดูระบบงานทั้งหมด
           </p>
         </div>
@@ -97,7 +97,7 @@ export function renderOrbitHero(container) {
                 onerror="this.src='${CONFIG.SCHOOL.logoDefault}'"
               />
             </div>
-            <span class="text-[9px] sm:text-[11px] font-bold tracking-wider text-pink-300 uppercase">
+            <span class="text-[10px] sm:text-xs font-extrabold tracking-wider text-pink-300 uppercase">
               RRU HUB
             </span>
           </div>
