@@ -1,0 +1,3 @@
+# 2. PIN-Based Admin Authentication and Google Drive Asset Pipeline
+
+We decided to secure portal administration via a server-verified PIN/passcode validated against a `Config` sheet in Google Sheets, rather than implementing Google OAuth. Image assets uploaded by administrators (school banners, logos, and custom icons) are streamed to a designated Google Drive folder via the Apps Script backend and stored as public thumbnail URLs. This allows school staff to manage portal content directly from the web interface without configuring Google Cloud OAuth credentials or needing developer intervention.

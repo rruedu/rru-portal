@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RRU Portal - โรงเรียนรัฐราษฎร์อุปถัมภ์</title>
+  <meta name="description" content="ระบบรวมงานและบริการออนไลน์ โรงเรียนรัฐราษฎร์อุปถัมภ์ (RRU All-in-One Service Portal)" />
+  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Seal_of_the_Ministry_of_Education_of_Thailand.svg/200px-Seal_of_the_Ministry_of_Education_of_Thailand.svg.png" />
+
+  <!-- Google Fonts: Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              purple: '#a855f7',
+              pink: '#ec4899',
+              dark: '#0a0616',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="./src/styles/main.css" />
+  <link rel="stylesheet" href="./src/styles/orbit.css" />
+</head>
+<body class="selection:bg-pink-500 selection:text-white">
+
+  <!-- Initial Fullscreen Loading Screen -->
+  <div id="initial-loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0616] transition-opacity duration-500">
+    <div class="relative w-20 h-20 mb-4">
+      <div class="absolute inset-0 rounded-full border-2 border-pink-500/20"></div>
+      <div class="absolute inset-0 rounded-full border-2 border-t-pink-500 border-r-purple-500 animate-spin"></div>
+      <div class="absolute inset-3 rounded-full bg-gradient-to-tr from-pink-500/20 to-purple-600/20 flex items-center justify-center">
+        <span class="text-xs font-bold text-pink-300">RRU</span>
+      </div>
+    </div>
+    <div class="text-sm font-medium bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+      กำลังโหลดระบบรวมงาน RRU Portal...
+    </div>
+  </div>
+
+  <!-- Ambient Cybernetic Glow Background -->
+  <div class="cyber-bg"></div>
+
+  <!-- Announcement Ticker -->
+  <div id="announcement-container"></div>
+
+  <!-- Sticky Navbar & Role Filter Bar -->
+  <div id="navbar-container"></div>
+
+  <!-- Main Content Layout -->
+  <main class="relative z-10 min-h-[calc(100vh-140px)]">
+    <!-- Radial Orbit Hero Section -->
+    <div id="orbit-container"></div>
+
+    <!-- Department Cards Section -->
+    <div id="departments-container"></div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 border-t border-pink-500/15 py-8 mt-12 bg-purple-950/20 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-purple-300/60 space-y-2">
+      <p class="font-medium text-purple-200">
+        โรงเรียนรัฐราษฎร์อุปถัมภ์ &bull; สังกัดสำนักงานเขตพื้นที่การศึกษามัธยมศึกษา
+      </p>
+      <p>
+        RRU All-in-One Service Portal &bull; ออกแบบเพื่อการเข้าถึงข้อมูลและบริการทางการศึกษาอย่างไร้รอยต่อ
+      </p>
+      <div class="pt-2 text-[11px] text-purple-300/40">
+        Hosted with GitHub Pages &bull; Powered by Google Apps Script & Google Sheets
+      </div>
+    </div>
+  </footer>
+
+  <!-- Admin Control Panel Modal Container -->
+  <div id="admin-modal-container" class="hidden"></div>
+
+  <!-- Toast Notifications Anchor -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+  <!-- Application Bootstrap Module -->
+  <script type="module" src="./src/js/app.js"></script>
+
+</body>
+</html>
