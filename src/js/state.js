@@ -65,18 +65,19 @@ class StateStore {
     };
 
     window.addEventListener('hashchange', handleHash);
-    // Initial check on load
     setTimeout(handleHash, 50);
   }
 
   goToHub() {
     window.location.hash = '';
     this.set({ currentView: 'hub', activeDepartment: null, searchQuery: '' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   goToDepartment(deptId) {
     window.location.hash = deptId;
     this.set({ currentView: 'department', activeDepartment: deptId, searchQuery: '' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   setSearchQuery(query) {
@@ -93,10 +94,19 @@ class StateStore {
   }
 
   setTheme(theme) {
-    this.set({ theme });
-    localStorage.setItem('rru_theme', theme);
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    document.documentElement.setAttribute('data-theme', theme);
+    const validTheme = theme === 'light' ? 'light' : 'dark';
+    this.set({ theme: validTheme });
+    localStorage.setItem('rru_theme', validTheme);
+    
+    if (validTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+    }
+    
+    document.documentElement.setAttribute('data-theme', validTheme);
   }
 
   toggleTheme() {

@@ -11,31 +11,50 @@ export function renderNavbar(container) {
 
   function update() {
     const state = store.get();
-    const { config, activeRole, theme, isAdmin, searchQuery } = state;
+    const { config, activeRole, theme, isAdmin, searchQuery, currentView, activeDepartment } = state;
+
+    const isSubView = currentView === 'department' || currentView === 'search';
+    const deptInfo = activeDepartment ? CONFIG.DEPARTMENTS.find(d => d.id === activeDepartment) : null;
 
     container.innerHTML = `
       <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-opacity-80 border-b border-pink-500/15 transition-all duration-300" style="background-color: var(--bg-card);">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-3">
             
-            <!-- School Brand / Logo -->
-            <div class="flex items-center gap-2.5 sm:gap-3 cursor-pointer group flex-shrink-0" id="nav-brand">
-              <div class="relative w-9 h-9 sm:w-12 sm:h-12 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-pink-500 to-purple-500 shadow-md group-hover:scale-105 transition-transform">
-                <img 
-                  src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" 
-                  alt="${escapeHtml(config.schoolName)}" 
-                  class="w-full h-full object-cover rounded-full bg-slate-900"
-                  onerror="this.src='${CONFIG.SCHOOL.logoDefault}'"
-                />
-              </div>
-              <div class="leading-tight">
-                <h1 class="text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-pink-400 via-fuchsia-300 to-purple-300 bg-clip-text text-transparent truncate max-w-[140px] sm:max-w-xs md:max-w-md">
-                  ${escapeHtml(config.schoolName)}
-                </h1>
-                <p class="text-[10px] sm:text-xs text-purple-300/70 hidden sm:block truncate">
-                  ${escapeHtml(config.schoolSubtitle)}
-                </p>
-              </div>
+            <!-- School Brand or Active View Back Button -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              ${isSubView ? `
+                <!-- Quick Return Button in Navbar -->
+                <button 
+                  id="nav-back-hub-btn" 
+                  class="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-xs sm:text-sm shadow-md shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all flex-shrink-0"
+                  title="กลับสู่หน้าวงโคจรหลัก"
+                >
+                  <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                  <i data-lucide="home" class="w-4 h-4"></i>
+                  <span>หน้าหลัก</span>
+                </button>
+              ` : `
+                <!-- Brand Logo & Title -->
+                <div class="flex items-center gap-2.5 sm:gap-3 cursor-pointer group" id="nav-brand">
+                  <div class="relative w-9 h-9 sm:w-12 sm:h-12 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-pink-500 to-purple-500 shadow-md group-hover:scale-105 transition-transform flex-shrink-0">
+                    <img 
+                      src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" 
+                      alt="${escapeHtml(config.schoolName)}" 
+                      class="w-full h-full object-cover rounded-full bg-slate-900"
+                      onerror="this.src='${CONFIG.SCHOOL.logoDefault}'"
+                    />
+                  </div>
+                  <div class="leading-tight">
+                    <h1 class="text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-pink-400 via-fuchsia-300 to-purple-300 bg-clip-text text-transparent truncate max-w-[130px] sm:max-w-xs md:max-w-md">
+                      ${escapeHtml(config.schoolName)}
+                    </h1>
+                    <p class="text-[10px] sm:text-xs text-purple-300/70 hidden sm:block truncate">
+                      ${escapeHtml(config.schoolSubtitle)}
+                    </p>
+                  </div>
+                </div>
+              `}
             </div>
 
             <!-- Instant Search Bar -->
@@ -73,7 +92,7 @@ export function renderNavbar(container) {
               <!-- Theme Toggle -->
               <button 
                 id="btn-toggle-theme" 
-                class="p-1.5 sm:p-2 rounded-xl border border-pink-500/20 hover:border-pink-500/50 bg-purple-900/20 text-pink-300 hover:text-pink-100 transition-all"
+                class="p-2 sm:p-2.5 rounded-xl border border-pink-500/30 hover:border-pink-500 bg-purple-900/30 hover:bg-pink-600/30 text-pink-300 hover:text-pink-100 transition-all cursor-pointer"
                 title="เปลี่ยนโหมดสี (Dark / Light)"
               >
                 <i data-lucide="${theme === 'dark' ? 'sun' : 'moon'}" class="w-4 h-4"></i>
@@ -82,7 +101,7 @@ export function renderNavbar(container) {
               <!-- Admin Control Button -->
               <button 
                 id="btn-open-admin" 
-                class="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2 rounded-xl border ${isAdmin ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white border-pink-400' : 'border-pink-500/30 bg-purple-950/40 text-pink-300 hover:border-pink-500'} text-xs font-medium transition-all shadow-sm"
+                class="flex items-center gap-1 p-2 sm:px-3 sm:py-2 rounded-xl border ${isAdmin ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white border-pink-400' : 'border-pink-500/30 bg-purple-950/40 text-pink-300 hover:border-pink-500'} text-xs font-medium transition-all shadow-sm cursor-pointer"
                 title="${isAdmin ? 'เปิดเมนูผู้ดูแลระบบ' : 'เข้าสู่ระบบแอดมิน'}"
               >
                 <i data-lucide="${isAdmin ? 'shield-check' : 'lock'}" class="w-4 h-4"></i>
@@ -102,7 +121,7 @@ export function renderNavbar(container) {
               return `
                 <button 
                   data-role-id="${role.id}" 
-                  class="role-pill-btn flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all flex-shrink-0 whitespace-nowrap ${
+                  class="role-pill-btn flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all flex-shrink-0 whitespace-nowrap cursor-pointer ${
                     isActive 
                       ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md shadow-pink-500/30 border border-pink-400 scale-105' 
                       : 'bg-purple-950/20 hover:bg-purple-900/40 text-purple-300/80 border border-pink-500/15 hover:border-pink-500/30'
@@ -125,6 +144,13 @@ export function renderNavbar(container) {
     const brand = container.querySelector('#nav-brand');
     if (brand) {
       brand.addEventListener('click', () => {
+        store.goToHub();
+      });
+    }
+
+    const navBackBtn = container.querySelector('#nav-back-hub-btn');
+    if (navBackBtn) {
+      navBackBtn.addEventListener('click', () => {
         store.goToHub();
       });
     }

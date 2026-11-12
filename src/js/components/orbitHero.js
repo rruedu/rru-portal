@@ -1,6 +1,6 @@
 /**
  * RRU School Portal - Unified Radial Orbit Hero Component
- * Displays on both Desktop and Mobile with responsive scaling
+ * Displays on both Desktop and Mobile with enlarged, high-contrast touch nodes
  */
 
 import { store } from '../state.js';
@@ -47,13 +47,13 @@ export function renderOrbitHero(container) {
           style="--cos: ${cosVal}; --sin: ${sinVal};"
           title="${escapeHtml(dept.name)} (${count} บริการ) - แตะเพื่อเปิดดู"
         >
-          <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr ${dept.color} flex items-center justify-center text-white mb-0.5 sm:mb-1 shadow-sm group-hover:scale-110 transition-transform flex-shrink-0">
-            <i data-lucide="${dept.icon}" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+          <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr ${dept.color} flex items-center justify-center text-white mb-0.5 sm:mb-1 shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+            <i data-lucide="${dept.icon}" class="w-4 h-4 sm:w-6 sm:h-6"></i>
           </div>
-          <span class="text-[9px] sm:text-[11px] font-semibold text-purple-200 group-hover:text-pink-300 text-center leading-tight max-w-[62px] sm:max-w-[85px] truncate px-0.5">
+          <span class="text-[10px] sm:text-xs font-bold text-purple-200 group-hover:text-pink-300 text-center leading-tight max-w-[74px] sm:max-w-[95px] truncate px-0.5">
             ${dept.shortName}
           </span>
-          <span class="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.2 rounded-full bg-pink-500/20 text-pink-300 font-mono mt-0.5">
+          <span class="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.2 rounded-full bg-pink-500/25 text-pink-300 font-mono font-semibold mt-0.5 border border-pink-500/30">
             ${count}
           </span>
         </div>
@@ -61,11 +61,11 @@ export function renderOrbitHero(container) {
     }).join('');
 
     container.innerHTML = `
-      <section class="relative py-6 sm:py-10 px-4 overflow-hidden view-enter">
+      <section class="relative py-4 sm:py-8 px-4 overflow-hidden view-enter">
         
         <!-- Header Text -->
-        <div class="text-center max-w-xl mx-auto mb-4 sm:mb-6">
-          <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-pink-500/10 border border-pink-500/25 text-pink-300 mb-2">
+        <div class="text-center max-w-xl mx-auto mb-3 sm:mb-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-pink-500/10 border border-pink-500/25 text-pink-300 mb-2">
             <span class="w-2 h-2 rounded-full bg-pink-400 animate-pulse"></span>
             ศูนย์รวมทุกระบบงาน รร.รัฐราษฎร์อุปถัมภ์
           </div>
@@ -74,7 +74,7 @@ export function renderOrbitHero(container) {
               เลือกกลุ่มบริหารเพื่อเข้าใช้งาน
             </span>
           </h2>
-          <p class="text-[11px] sm:text-xs text-purple-200/70 mt-1 max-w-sm mx-auto">
+          <p class="text-xs text-purple-200/70 mt-1 max-w-sm mx-auto">
             แตะที่กลุ่มฝ่ายรอบวงโคจร เพื่อดูระบบงานทั้งหมด
           </p>
         </div>
@@ -89,7 +89,7 @@ export function renderOrbitHero(container) {
           <!-- Central School Emblem -->
           <div class="center-hub group" id="center-hub-node" title="โรงเรียนรัฐราษฎร์อุปถัมภ์">
             <div class="pulse-halo"></div>
-            <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 mb-0.5">
+            <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 mb-0.5 shadow-inner">
               <img 
                 src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" 
                 alt="RRU" 
@@ -97,7 +97,7 @@ export function renderOrbitHero(container) {
                 onerror="this.src='${CONFIG.SCHOOL.logoDefault}'"
               />
             </div>
-            <span class="text-[8px] sm:text-[10px] font-bold tracking-wider text-pink-300 uppercase">
+            <span class="text-[9px] sm:text-[11px] font-bold tracking-wider text-pink-300 uppercase">
               RRU HUB
             </span>
           </div>
@@ -120,7 +120,7 @@ export function renderOrbitHero(container) {
         createBurstEffect(node);
         setTimeout(() => {
           store.goToDepartment(deptId);
-        }, 220);
+        }, 200);
       });
     });
   }
