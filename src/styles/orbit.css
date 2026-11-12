@@ -1,45 +1,26 @@
-/* RRU School Portal - Responsive Radial Orbit Styles */
+/* RRU School Portal - Perfected Fluid Radial Orbit Styles */
 
 :root {
-  --orbit-radius: 215px;
-  --node-size: 122px;
-  --hub-size: 145px;
-}
-
-@media (max-width: 640px) {
-  :root {
-    --orbit-radius: 138px;
-    --node-size: 88px;
-    --hub-size: 104px;
-  }
-}
-
-@media (max-width: 380px) {
-  :root {
-    --orbit-radius: 128px;
-    --node-size: 84px;
-    --hub-size: 96px;
-  }
+  /* Fluid responsive dimensions using clamp() */
+  --orbit-radius: clamp(110px, 31vw, 205px);
+  --node-size: clamp(70px, 19vw, 114px);
+  --hub-size: clamp(84px, 23vw, 140px);
 }
 
 /* Central Orbit Container */
 .orbit-system {
   position: relative;
   width: 100%;
-  max-width: 600px;
-  height: 560px;
+  max-width: 580px;
+  height: calc(var(--orbit-radius) * 2 + var(--node-size) + 40px);
+  min-height: 340px;
+  max-height: 540px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
-}
-
-@media (max-width: 640px) {
-  .orbit-system {
-    max-width: 390px;
-    height: 390px;
-  }
+  touch-action: manipulation;
 }
 
 /* Atmospheric Pulsing Orbit Rings */
@@ -50,20 +31,20 @@
 }
 
 .orbit-ring-outer {
-  width: calc(var(--orbit-radius) * 2 + 55px);
-  height: calc(var(--orbit-radius) * 2 + 55px);
-  border: 1.5px dashed rgba(236, 72, 153, 0.3);
+  width: calc(var(--orbit-radius) * 2 + 30px);
+  height: calc(var(--orbit-radius) * 2 + 30px);
+  border: 1.5px dashed rgba(236, 72, 153, 0.35);
   animation: spin-slow 120s linear infinite;
 }
 
 .orbit-ring-inner {
-  width: calc(var(--orbit-radius) * 1.4);
-  height: calc(var(--orbit-radius) * 1.4);
-  border: 1.5px dotted rgba(168, 85, 247, 0.3);
+  width: calc(var(--orbit-radius) * 1.35);
+  height: calc(var(--orbit-radius) * 1.35);
+  border: 1.5px dotted rgba(168, 85, 247, 0.35);
   animation: spin-reverse 80s linear infinite;
 }
 
-/* Center Emblem Node */
+/* Center School Emblem Node */
 .center-hub {
   position: relative;
   z-index: 20;
@@ -107,7 +88,7 @@ html.light .center-hub {
   pointer-events: none;
 }
 
-/* Orbit Satellite Nodes */
+/* Orbit Satellite Nodes (5 Departments) */
 .orbit-node {
   position: absolute;
   z-index: 25;
