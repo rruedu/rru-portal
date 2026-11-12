@@ -5,7 +5,7 @@
 
 import { store } from '../state.js';
 import { CONFIG } from '../config.js';
-import { escapeHtml, refreshIcons } from '../utils.js';
+import { escapeHtml, refreshIcons, formatDisplayUrl, normalizeDriveImage } from '../utils.js';
 
 export function renderDepartmentGrid(container) {
   if (!container) return;
@@ -86,7 +86,7 @@ export function renderDepartmentGrid(container) {
               <div class="min-w-0">
                 ${targetDept ? `
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-xs sm:text-sm px-3 py-1 rounded-full bg-gradient-to-r ${targetDept.color} text-white font-bold shadow-sm">
+                    <span class="text-xs sm:text-sm px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold shadow-sm shadow-pink-500/25">
                       ${targetDept.shortName}
                     </span>
                     <span class="text-xs sm:text-sm text-purple-200 font-mono font-bold">${filteredLinks.length} บริการ</span>
@@ -119,7 +119,7 @@ export function renderDepartmentGrid(container) {
         <!-- Cards Grid (Full Title, No Truncate) -->
         ${filteredLinks.length > 0 ? `
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            ${filteredLinks.map(link => renderServiceCard(link, targetDept, isAdmin)).join('')}
+            ${filteredLinks.map((link, idx) => renderServiceCard(link, targetDept, isAdmin, idx)).join('')}
           </div>
 
           <!-- Single Clean Bottom Return to Hub Button -->
@@ -189,7 +189,7 @@ export function renderDepartmentGrid(container) {
     }
   }
 
-  function renderServiceCard(link, dept, isAdmin) {
+  function renderServiceCard(link, dept, isAdmin, index = 0) {
     const roleColors = {
       student: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
       parent: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
@@ -206,47 +206,66 @@ export function renderDepartmentGrid(container) {
 
     const roleBadgeClass = roleColors[link.role] || roleColors.all;
     const roleLabel = roleLabels[link.role] || 'ทั่วไป';
+    const iconUrl = normalizeDriveImage(link.iconUrl || link.icon_url || '');
 
     return `
       <a 
         href="${escapeHtml(link.link)}" 
         target="_blank" 
         rel="noopener noreferrer" 
-        class="service-card glass-panel group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl block text-left"
+        class="service-app-card stagger-card glass-panel group relative flex flex-col justify-between p-4 sm:p-5 rounded-3xl block text-left border border-pink-500/25 hover:border-pink-500/50 shadow-md"
+        style="animation-delay: ${(index * 0.04).toFixed(2)}s;"
       >
-        <div class="flex items-start justify-between gap-3 mb-3">
-          <!-- Big Card Icon -->
-          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden p-1.5 bg-gradient-to-tr from-pink-500/25 to-purple-500/25 border border-pink-500/35 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-md">
-            ${link.iconUrl ? `
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <!-- Big 3D Squircle App Icon -->
+          <div class="app-icon-squircle w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+            ${iconUrl ? `
               <img 
-                src="${escapeHtml(link.iconUrl)}" 
+                src="${escapeHtml(iconUrl)}" 
                 alt="${escapeHtml(link.systemName)}" 
-                class="w-full h-full object-contain rounded-xl"
-                onerror="this.onerror=null; this.parentElement.innerHTML='<i data-lucide=\\'layers\\' class=\\'w-8 h-8 text-pink-400\\'></i>'; window.lucide && window.lucide.createIcons();"
+                class="w-full h-full object-contain rounded-xl sm:rounded-2xl"
+                onerror="this.onerror=null; this.parentElement.innerHTML='<i data-lucide=\\'layers\\' class=\\'w-8 h-8 sm:w-10 sm:h-10 text-pink-400\\'></i>'; window.lucide && window.lucide.createIcons();"
               />
             ` : `
-              <i data-lucide="${dept?.icon || 'layers'}" class="w-8 h-8 text-pink-400"></i>
+              <i data-lucide="${dept?.icon || 'layers'}" class="w-8 h-8 sm:w-10 sm:h-10 text-pink-400"></i>
             `}
           </div>
 
-          <div class="flex items-center gap-1.5">
-            <span class="text-xs px-2.5 py-1 rounded-full border font-bold ${roleBadgeClass}">
+          <!-- Top-Right: Role Badge & Quick Launch Pill -->
+          <div class="flex flex-col items-end gap-2 flex-shrink-0">
+            <span class="text-[10px] sm:text-xs px-2.5 py-0.5 sm:py-1 rounded-full border font-bold ${roleBadgeClass}">
               ${roleLabel}
             </span>
-            <div class="w-7 h-7 rounded-xl bg-pink-500/15 flex items-center justify-center text-pink-400/80 group-hover:text-pink-300 group-hover:translate-x-0.5 transition-all">
-              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+
+            <!-- Quick Launch Badge -->
+            <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-pink-500/15 group-hover:bg-gradient-to-r group-hover:from-pink-500 group-hover:to-purple-600 text-pink-300 group-hover:text-white border border-pink-500/25 group-hover:border-transparent text-[10px] sm:text-xs font-bold transition-all shadow-sm group-hover:shadow-pink-500/30">
+              <span class="hidden sm:inline">เปิดระบบ</span>
+              <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
             </div>
           </div>
         </div>
 
-        <!-- Full Title Without Truncation (No Line Clamp, No Ellipsis) -->
-        <div class="mt-2 flex-1">
-          <h4 class="text-base sm:text-lg font-bold text-purple-100 group-hover:text-pink-300 transition-colors leading-snug break-words">
-            ${escapeHtml(link.systemName)}
-          </h4>
-          <span class="text-xs text-purple-300/70 mt-1.5 block">
-            ${escapeHtml(link.group)}
-          </span>
+        <!-- Full Title & Details -->
+        <div class="mt-3 flex-1 flex flex-col justify-between">
+          <div>
+            <h4 class="text-sm sm:text-base md:text-lg font-extrabold text-purple-100 group-hover:text-pink-300 transition-colors leading-snug break-words">
+              ${escapeHtml(link.systemName)}
+            </h4>
+            <span class="text-xs text-purple-300/70 mt-1 block">
+              ${escapeHtml(link.group)}
+            </span>
+          </div>
+
+          <!-- Domain Preview Footer -->
+          <div class="mt-3 pt-2.5 border-t border-pink-500/15 flex items-center justify-between text-[11px] font-mono text-purple-300/60">
+            <span class="truncate text-pink-400/80 font-medium flex items-center gap-1 max-w-[70%]">
+              <i data-lucide="link" class="w-3 h-3 flex-shrink-0"></i>
+              <span class="truncate">${formatDisplayUrl(link.link)}</span>
+            </span>
+            <span class="text-[10px] text-purple-400/40 group-hover:text-pink-300 transition-colors flex-shrink-0">
+              คลิกเปิด ➔
+            </span>
+          </div>
         </div>
 
         ${isAdmin ? `

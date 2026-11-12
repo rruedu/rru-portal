@@ -64,5 +64,9 @@ _Avoid_: Gray mode, White inversion
 The direct client-to-cloud asset upload workflow that scales and compresses application icon images to 512x512 pixels before depositing them into the school's `RRU_Portal_Assets` Google Drive folder.
 _Avoid_: External image hosting, Raw binary paste
 
+**Department App Launchpad (กระดานแอปพลิเคชันกลุ่มงาน)**:
+The focused service grid displaying application links as prominent 3D squircle app icons with unified violet-pink branding, interactive launch badges, and staggered entry motion.
+_Avoid_: Simple link list, Flat table
+
 
 
