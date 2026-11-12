@@ -1,26 +1,32 @@
 /* RRU School Portal - Perfected Fluid Radial Orbit Styles */
 
 :root {
-  /* Fluid responsive dimensions using clamp() */
-  --orbit-radius: clamp(110px, 31vw, 205px);
-  --node-size: clamp(70px, 19vw, 114px);
-  --hub-size: clamp(84px, 23vw, 140px);
+  /* Enlarged fluid dimensions */
+  --orbit-radius: clamp(130px, 35.5vw, 215px);
+  --node-size: clamp(80px, 21.5vw, 120px);
+  --hub-size: clamp(96px, 26vw, 145px);
 }
 
 /* Central Orbit Container */
 .orbit-system {
   position: relative;
   width: 100%;
-  max-width: 580px;
-  height: calc(var(--orbit-radius) * 2 + var(--node-size) + 40px);
-  min-height: 340px;
-  max-height: 540px;
+  max-width: 600px;
+  height: calc(var(--orbit-radius) * 2 + var(--node-size) + 30px);
+  min-height: 380px;
+  max-height: 560px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
   touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+  .orbit-system {
+    min-height: 370px;
+  }
 }
 
 /* Atmospheric Pulsing Orbit Rings */
@@ -31,8 +37,8 @@
 }
 
 .orbit-ring-outer {
-  width: calc(var(--orbit-radius) * 2 + 30px);
-  height: calc(var(--orbit-radius) * 2 + 30px);
+  width: calc(var(--orbit-radius) * 2 + 25px);
+  height: calc(var(--orbit-radius) * 2 + 25px);
   border: 1.5px dashed rgba(236, 72, 153, 0.35);
   animation: spin-slow 120s linear infinite;
 }

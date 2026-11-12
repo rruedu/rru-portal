@@ -123,14 +123,13 @@ export function renderDepartmentGrid(container) {
           </div>
 
           <!-- Bottom Return to Hub Banner -->
-          <div class="mt-10 pt-6 border-t border-pink-500/15 text-center">
+          <div class="mt-8 pt-6 border-t border-pink-500/15 text-center">
             <button 
               id="btn-bottom-back-hub" 
-              class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-purple-900/40 hover:bg-pink-600/40 border border-pink-500/30 text-purple-100 hover:text-white text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-md"
+              class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-lg shadow-pink-500/25 active:scale-95"
             >
-              <i data-lucide="arrow-left" class="w-4 h-4 text-pink-400"></i>
-              <i data-lucide="home" class="w-4 h-4 text-pink-400"></i>
-              <span>สิ้นสุดรายการ &bull; กดเพื่อกลับสู่หน้าวงโคจรหลัก</span>
+              <i data-lucide="home" class="w-4 h-4"></i>
+              <span>หน้าหลัก</span>
             </button>
           </div>
         ` : `
