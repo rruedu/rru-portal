@@ -246,6 +246,26 @@ html.light .border-purple-500\/30 {
   border-color: rgba(219, 39, 119, 0.2) !important;
 }
 
+/* Light Theme Announcement Banner */
+html.light .announcement-banner {
+  background: linear-gradient(90deg, #fdf2f8 0%, #faf5ff 50%, #fdf2f8 100%) !important;
+  border-bottom-color: rgba(244, 114, 182, 0.4) !important;
+  box-shadow: 0 1px 6px rgba(219, 39, 119, 0.05) !important;
+}
+html.light .announcement-banner .announcement-tag {
+  color: #db2777 !important;
+}
+html.light .announcement-banner .announcement-text {
+  color: #1e1b4b !important;
+  font-weight: 600 !important;
+}
+html.light .announcement-banner .announcement-close {
+  color: #94a3b8 !important;
+}
+html.light .announcement-banner .announcement-close:hover {
+  color: #db2777 !important;
+}
+
 /* Light Theme Navigation & Brand Gradient */
 html.light header {
   background-color: rgba(255, 255, 255, 0.95) !important;

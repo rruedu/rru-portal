@@ -18,9 +18,9 @@ export function renderAnnouncement(container) {
 
     container.classList.remove('hidden');
     container.innerHTML = `
-      <div class="relative overflow-hidden bg-gradient-to-r from-pink-900/60 via-purple-900/60 to-pink-900/60 border-b border-pink-500/20 py-2.5 px-4 backdrop-blur-md">
+      <div class="announcement-banner relative overflow-hidden bg-gradient-to-r from-pink-50/95 via-purple-50/95 to-pink-50/95 dark:from-pink-950/70 dark:via-purple-950/70 dark:to-pink-950/70 border-b border-pink-200/70 dark:border-pink-500/20 py-2.5 px-4 backdrop-blur-md transition-colors shadow-sm">
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs sm:text-sm">
-          <div class="flex items-center gap-2 flex-shrink-0 font-bold text-pink-300">
+          <div class="announcement-tag flex items-center gap-2 flex-shrink-0 font-bold text-pink-600 dark:text-pink-300">
             <span class="relative flex h-2.5 w-2.5">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500"></span>
@@ -30,12 +30,12 @@ export function renderAnnouncement(container) {
           </div>
 
           <div class="overflow-hidden relative w-full">
-            <div class="text-purple-100 font-medium text-xs sm:text-sm leading-snug">
+            <div class="announcement-text text-slate-800 dark:text-purple-100 font-semibold text-xs sm:text-sm leading-snug">
               ${escapeHtml(config.announcementText)}
             </div>
           </div>
 
-          <button id="btn-close-announcement" class="text-pink-400/80 hover:text-pink-200 transition-colors p-1 rounded cursor-pointer" title="ปิดการแจ้งเตือน">
+          <button id="btn-close-announcement" class="announcement-close text-slate-400 hover:text-pink-600 dark:text-pink-400/80 dark:hover:text-pink-200 transition-colors p-1 rounded cursor-pointer" title="ปิดการแจ้งเตือน">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
