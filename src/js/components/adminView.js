@@ -82,7 +82,7 @@ export function renderAdminView(container) {
                 id="admin-pin-input" 
                 required 
                 autofocus
-                placeholder="กรอก PIN (เริ่มต้น: 1234)" 
+                placeholder="กรอกรหัสผ่าน PIN ผู้ดูแล" 
                 class="w-full px-4 py-3.5 rounded-2xl bg-purple-950/40 border border-pink-500/25 focus:border-pink-500 text-purple-100 placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-pink-500/20 text-center tracking-widest text-xl font-mono"
               />
             </div>
@@ -101,7 +101,7 @@ export function renderAdminView(container) {
 
           <div class="mt-6 pt-4 border-t border-pink-500/15 text-center space-y-1">
             <p class="text-[11px] text-purple-300/60">
-              ค่าเริ่มต้นจากระบบ: PIN <span class="font-mono text-pink-300 font-bold">1234</span>
+              ระบบรักษาความปลอดภัยเฉพาะผู้ดูแลระบบ
             </p>
             <p class="text-[10px] text-purple-300/40">
               พัฒนาระบบโดย ครูไตรรัตน์ จันทร์มาศ
@@ -135,14 +135,8 @@ export function renderAdminView(container) {
           showToast('เข้าสู่ระบบผู้ดูแลสำเร็จ', 'success');
           update();
         } catch (err) {
-          if (pin === '1234') {
-            store.setAdmin(true, pin);
-            showToast('เข้าสู่ระบบสำเร็จด้วย PIN ค่าเริ่มต้น (1234)', 'success');
-            update();
-          } else {
-            errorMsg.textContent = err.message || 'รหัส PIN ไม่ถูกต้อง โปรดตรวจสอบอีกครั้ง';
-            errorMsg.classList.remove('hidden');
-          }
+          errorMsg.textContent = err.message || 'รหัส PIN ไม่ถูกต้อง โปรดตรวจสอบอีกครั้ง';
+          errorMsg.classList.remove('hidden');
         } finally {
           submitBtn.disabled = false;
         }
