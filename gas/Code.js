@@ -452,12 +452,13 @@ function normalizeImageUrl_(url) {
 }
 
 /**
- * Check Admin PIN against Config sheet (Default: 1234)
+ * Check Admin PIN against Config sheet (Strict: Must match Sheet value)
  */
 function checkAdminPin_(inputPin) {
   if (!inputPin) return false;
   const config = getConfigMap_();
-  const savedPin = config['ADMIN_PIN'] || '1234';
+  const savedPin = config['ADMIN_PIN'];
+  if (!savedPin || String(savedPin).trim() === '') return false;
   return String(inputPin).trim() === String(savedPin).trim();
 }
 
@@ -484,7 +485,7 @@ function getConfigSheet_(ss) {
     sheet.appendRow(['Key', 'Value', 'Description']);
     sheet.getRange(1, 1, 1, 3).setFontWeight('bold');
     // Set default initial configurations
-    sheet.appendRow(['ADMIN_PIN', '1234', 'รหัสผ่านผู้ดูแลระบบ']);
+    sheet.appendRow(['ADMIN_PIN', '', 'รหัสผ่านผู้ดูแลระบบ']);
     sheet.appendRow(['SCHOOL_NAME', 'โรงเรียนรัฐราษฎร์อุปถัมภ์', 'ชื่อสถานศึกษา']);
     sheet.appendRow(['SCHOOL_SUBTITLE', 'ระบบรวมงานและบริการสารสนเทศออนไลน์ (RRU Portal)', 'คำขวัญหรือคำอธิบาย']);
     sheet.appendRow(['BANNER_URL', '', 'URL รูปภาพแบนเนอร์ส่วนหัว']);
