@@ -1,11 +1,11 @@
 /**
  * RRU School Portal - Progressive Web App Service Worker
- * Version: v3.7.0 (Fix AdminView Syntax Error & Resilient Fast Loader)
+ * Version: v3.8.0 (Guaranteed Cache-Buster & Immediate Activation)
  */
 
-const STATIC_CACHE = 'rru-static-v3-7';
-const API_CACHE = 'rru-api-v3-7';
-const RUNTIME_CACHE = 'rru-runtime-v3-7';
+const STATIC_CACHE = 'rru-static-v3-8';
+const API_CACHE = 'rru-api-v3-8';
+const RUNTIME_CACHE = 'rru-runtime-v3-8';
 
 const PRECACHE_ASSETS = [
   './',
@@ -34,6 +34,7 @@ const PRECACHE_ASSETS = [
 
 // 1. Install Event: Pre-cache core shell assets
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(STATIC_CACHE).then(async (cache) => {
       try {
@@ -41,7 +42,6 @@ self.addEventListener('install', (event) => {
       } catch (err) {
         console.warn('SW Precache non-fatal warning:', err);
       }
-      return self.skipWaiting();
     })
   );
 });
