@@ -1,17 +1,17 @@
 /**
  * RRU School Portal - Focused Department & Search Results Cards View
- * Clean navigation with a single bottom return button
+ * Includes Favorites System, Status Badges, and Broken Link Reporting
  */
 
 import { store } from '../state.js';
 import { CONFIG } from '../config.js';
-import { escapeHtml, refreshIcons, formatDisplayUrl, normalizeDriveImage } from '../utils.js';
+import { escapeHtml, refreshIcons, formatDisplayUrl, normalizeDriveImage, showToast } from '../utils.js';
 
 export function renderDepartmentGrid(container) {
   if (!container) return;
 
   function update() {
-    const { links, activeRole, activeDepartment, searchQuery, currentView, isAdmin } = store.get();
+    const { links, activeRole, activeDepartment, searchQuery, currentView, isAdmin, favorites = [] } = store.get();
 
     // If on home/hub view or admin view, hide cards completely
     if (currentView === 'hub' || currentView === 'admin') {
@@ -24,19 +24,24 @@ export function renderDepartmentGrid(container) {
 
     // Filter links based on Role and Search Query
     const query = (searchQuery || '').toLowerCase();
+    const isFavView = activeRole === 'favorites';
 
     let targetDept = null;
-    if (currentView === 'department' && activeDepartment) {
+    if (currentView === 'department' && activeDepartment && !isFavView) {
       targetDept = CONFIG.DEPARTMENTS.find(d => d.id === activeDepartment) || null;
     }
 
     const filteredLinks = links.filter(item => {
       // Role filter
-      const matchRole = activeRole === 'all' || item.role === 'all' || item.role === activeRole;
-      if (!matchRole) return false;
+      if (isFavView) {
+        if (!favorites.includes(item.id)) return false;
+      } else if (activeRole !== 'all') {
+        const matchRole = item.role === 'all' || item.role === activeRole;
+        if (!matchRole) return false;
+      }
 
-      // Department filter
-      if (targetDept && item.group !== targetDept.name) {
+      // Department filter (only filter by department when not in favorites view)
+      if (targetDept && !isFavView && item.group !== targetDept.name) {
         return false;
       }
 
@@ -62,7 +67,7 @@ export function renderDepartmentGrid(container) {
             </button>
             <i data-lucide="chevron-right" class="w-4 h-4 text-purple-400/50"></i>
             <span class="text-purple-100 font-semibold">
-              ${targetDept ? escapeHtml(targetDept.name) : `ผลการค้นหา: "${escapeHtml(searchQuery)}"`}
+              ${isFavView ? '⭐ รายการโปรดของฉัน' : (targetDept ? escapeHtml(targetDept.name) : `ผลการค้นหา: "${escapeHtml(searchQuery)}"`)}
             </span>
           </nav>
         </div>
@@ -84,7 +89,21 @@ export function renderDepartmentGrid(container) {
               </button>
 
               <div class="min-w-0">
-                ${targetDept ? `
+                ${isFavView ? `
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs sm:text-sm px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-pink-500 text-white font-bold shadow-sm shadow-amber-500/25 flex items-center gap-1">
+                      <i data-lucide="star" class="w-3.5 h-3.5 fill-white"></i>
+                      <span>รายการโปรด</span>
+                    </span>
+                    <span class="text-xs sm:text-sm text-purple-200 font-mono font-bold">${filteredLinks.length} บริการ</span>
+                  </div>
+                  <h3 class="text-xl sm:text-2xl font-extrabold text-purple-100 mt-1 leading-snug">
+                    ระบบงานโปรดของฉัน
+                  </h3>
+                  <p class="text-xs sm:text-sm text-purple-300/80 hidden sm:block mt-0.5">
+                    รวมทุกระบบงานที่คุณกดบันทึกดาวไว้ เพื่อการเปิดใช้งานอย่างสะดวกและรวดเร็ว
+                  </p>
+                ` : targetDept ? `
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs sm:text-sm px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold shadow-sm shadow-pink-500/25">
                       ${targetDept.shortName}
@@ -119,7 +138,7 @@ export function renderDepartmentGrid(container) {
         <!-- Cards Grid (2 Columns on Mobile, Up to 5 on Desktop) -->
         ${filteredLinks.length > 0 ? `
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
-            ${filteredLinks.map((link, idx) => renderServiceCard(link, targetDept, isAdmin, idx)).join('')}
+            ${filteredLinks.map((link, idx) => renderServiceCard(link, targetDept, isAdmin, idx, favorites.includes(link.id))).join('')}
           </div>
 
           <!-- Single Clean Bottom Return to Hub Button -->
@@ -132,6 +151,23 @@ export function renderDepartmentGrid(container) {
               <span>หน้าหลัก</span>
             </button>
           </div>
+        ` : isFavView ? `
+          <div class="py-14 text-center glass-panel rounded-3xl border border-dashed border-amber-500/30 max-w-md mx-auto my-6 p-6">
+            <div class="w-14 h-14 rounded-full bg-amber-500/15 text-amber-400 flex items-center justify-center mx-auto mb-3 border border-amber-500/25">
+              <i data-lucide="star" class="w-7 h-7"></i>
+            </div>
+            <h4 class="text-base sm:text-lg font-bold text-purple-100">ยังไม่มีระบบงานโปรด</h4>
+            <p class="text-xs sm:text-sm text-purple-300/70 mt-1 leading-relaxed">
+              คุณสามารถกดที่ไอคอนรูปดาว <span class="text-amber-400 font-bold">★</span> บนการ์ดระบบงานใดก็ได้ เพื่อปักหมุดเป็นระบบที่คุณใช้งานเป็นประจำ
+            </p>
+            <button 
+              id="btn-browse-all-from-fav" 
+              class="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-xs shadow-md shadow-pink-500/30 hover:scale-105 transition-all cursor-pointer"
+            >
+              <i data-lucide="layout-grid" class="w-4 h-4"></i>
+              <span>ดูระบบงานทั้งหมด</span>
+            </button>
+          </div>
         ` : `
           <div class="py-16 text-center bg-purple-950/20 rounded-3xl border border-dashed border-pink-500/25">
             <i data-lucide="inbox" class="w-14 h-14 mx-auto mb-3 text-pink-400/50"></i>
@@ -139,9 +175,6 @@ export function renderDepartmentGrid(container) {
             <p class="text-xs sm:text-sm text-purple-300/70 mt-1 max-w-sm mx-auto">
               ลองสลับปุ่มบทบาท (นักเรียน / ผู้ปกครอง / ครู) ด้านบน หรือกดกลับหน้าหลัก
             </p>
-            <button id="btn-back-to-hub-empty" class="mt-5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 shadow-lg cursor-pointer">
-              <i data-lucide="home" class="w-4 h-4"></i> กลับหน้าวงโคจรหลัก
-            </button>
           </div>
         `}
 
@@ -150,18 +183,61 @@ export function renderDepartmentGrid(container) {
 
     refreshIcons(container);
 
-    // Event Bindings
+    // Bind return actions
     const returnActions = [
       container.querySelector('#btn-back-to-hub'),
       container.querySelector('#breadcrumb-hub'),
-      container.querySelector('#btn-bottom-back-hub'),
-      container.querySelector('#btn-back-to-hub-empty')
+      container.querySelector('#btn-bottom-back-hub')
     ];
 
     returnActions.forEach(btn => {
       if (btn) {
         btn.addEventListener('click', () => store.goToHub());
       }
+    });
+
+    // Empty state browse all button
+    const btnBrowseAll = container.querySelector('#btn-browse-all-from-fav');
+    if (btnBrowseAll) {
+      btnBrowseAll.addEventListener('click', () => {
+        store.setActiveRole('all');
+      });
+    }
+
+    // Favorite Toggle Buttons
+    const favBtns = container.querySelectorAll('.btn-toggle-favorite');
+    favBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const favId = btn.dataset.favId;
+        const isNowFav = store.toggleFavorite(favId);
+        showToast(isNowFav ? 'บันทึกลงรายการโปรดเรียบร้อยแล้ว ⭐' : 'นำออกจากรายการโปรดแล้ว', 'info');
+      });
+    });
+
+    // Report Issue Buttons
+    const reportBtns = container.querySelectorAll('.btn-card-report');
+    reportBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const { reportId, systemName, link } = btn.dataset;
+        document.dispatchEvent(new CustomEvent('open-report-modal', {
+          detail: { linkId: reportId, systemName, link }
+        }));
+      });
+    });
+
+    // Maintenance Warning on Cards
+    const maintCards = container.querySelectorAll('.service-app-card[data-status="maintenance"]');
+    maintCards.forEach(card => {
+      card.addEventListener('click', (e) => {
+        const sysName = card.dataset.systemName || 'ระบบงานนี้';
+        if (!confirm(`แจ้งเตือน: "${sysName}" กำลังอยู่ระหว่างปิดปรับปรุงชั่วคราวโดยผู้ดูแลระบบ\n\nคุณยังต้องการเปิดลิงก์ไปยังระบบนี้อยู่หรือไม่?`)) {
+          e.preventDefault();
+        }
+      });
     });
 
     // Admin Card Actions
@@ -191,7 +267,7 @@ export function renderDepartmentGrid(container) {
     }
   }
 
-  function renderServiceCard(link, dept, isAdmin, index = 0) {
+  function renderServiceCard(link, dept, isAdmin, index = 0, isFavorite = false) {
     const roleColors = {
       student: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
       parent: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
@@ -209,32 +285,56 @@ export function renderDepartmentGrid(container) {
     const roleBadgeClass = roleColors[link.role] || roleColors.all;
     const roleLabel = roleLabels[link.role] || 'ทั่วไป';
     const iconUrl = normalizeDriveImage(link.iconUrl || link.icon_url || '');
+    const isMaintenance = link.status === 'maintenance';
 
     return `
       <a 
         href="${escapeHtml(link.link)}" 
         target="_blank" 
         rel="noopener noreferrer" 
-        class="service-app-card stagger-card glass-panel group relative flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl block text-center sm:text-left border border-pink-500/25 hover:border-pink-500/50 active:scale-95 active:border-pink-400 active:shadow-pink-500/40 transition-all shadow-md select-none"
+        data-status="${isMaintenance ? 'maintenance' : 'active'}"
+        data-system-name="${escapeHtml(link.systemName)}"
+        class="service-app-card stagger-card glass-panel group relative flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl block text-center sm:text-left border ${isMaintenance ? 'border-amber-500/40 bg-amber-950/10' : 'border-pink-500/25 hover:border-pink-500/50'} active:scale-95 active:border-pink-400 active:shadow-pink-500/40 transition-all shadow-md select-none"
         style="animation-delay: ${(index * 0.035).toFixed(2)}s;"
       >
-        <!-- Top Row: Role Badge & Quick Launch Icon -->
+        <!-- Top Row: Role Badge & Actions (Favorite & Report) -->
         <div class="flex items-center justify-between gap-1 w-full mb-1 sm:mb-2">
           <!-- Role Badge -->
-          <span class="text-[9px] sm:text-[11px] px-2 py-0.5 rounded-full border font-bold ${roleBadgeClass} truncate max-w-[85px] sm:max-w-none">
+          <span class="text-[9px] sm:text-[11px] px-2 py-0.5 rounded-full border font-bold ${roleBadgeClass} truncate max-w-[75px] sm:max-w-none">
             ${roleLabel}
           </span>
 
-          <!-- Launch Arrow Badge -->
-          <div class="inline-flex items-center gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-pink-500/15 group-hover:bg-gradient-to-r group-hover:from-pink-500 group-hover:to-purple-600 text-pink-300 group-hover:text-white border border-pink-500/25 group-hover:border-transparent text-[9px] sm:text-xs font-bold transition-all shadow-sm">
-            <span class="hidden sm:inline">เปิด</span>
-            <i data-lucide="arrow-up-right" class="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+          <!-- Quick Action Buttons: Favorite & Report -->
+          <div class="flex items-center gap-1 flex-shrink-0" onclick="event.stopPropagation();">
+            <!-- Favorite Star Button -->
+            <button 
+              data-fav-id="${link.id}" 
+              class="btn-toggle-favorite p-1 sm:p-1.5 rounded-lg border transition-all cursor-pointer ${
+                isFavorite 
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' 
+                  : 'bg-purple-900/30 text-purple-300/60 border-purple-500/20 hover:text-amber-300 hover:border-amber-500/30'
+              }" 
+              title="${isFavorite ? 'นำออกจากรายการโปรด' : 'บันทึกลงรายการโปรด'}"
+            >
+              <i data-lucide="star" class="w-3 h-3 sm:w-3.5 sm:h-3.5 ${isFavorite ? 'fill-amber-400 text-amber-400' : ''}"></i>
+            </button>
+
+            <!-- Report Broken Link Button -->
+            <button 
+              data-report-id="${link.id}" 
+              data-system-name="${escapeHtml(link.systemName)}" 
+              data-link="${escapeHtml(link.link)}"
+              class="btn-card-report p-1 sm:p-1.5 rounded-lg bg-purple-900/30 text-purple-300/50 hover:text-pink-300 border border-purple-500/20 hover:border-pink-500/30 transition-all cursor-pointer"
+              title="แจ้งปัญหาระบบงานหรือลิงก์เสีย"
+            >
+              <i data-lucide="flag" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
+            </button>
           </div>
         </div>
 
         <!-- Center: Big 3D Squircle App Icon (Focal Point) -->
-        <div class="my-2 sm:my-3 flex justify-center items-center w-full">
-          <div class="app-icon-squircle w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 flex items-center justify-center relative overflow-hidden shadow-lg group-hover:scale-110 group-active:scale-95 transition-transform duration-200">
+        <div class="my-2 sm:my-3 flex justify-center items-center w-full relative">
+          <div class="app-icon-squircle w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 flex items-center justify-center relative overflow-hidden shadow-lg group-hover:scale-110 group-active:scale-95 transition-transform duration-200 ${isMaintenance ? 'opacity-80 grayscale-[20%]' : ''}">
             ${iconUrl ? `
               <img 
                 src="${escapeHtml(iconUrl)}" 
@@ -246,6 +346,13 @@ export function renderDepartmentGrid(container) {
               <i data-lucide="${dept?.icon || 'layers'}" class="w-8 h-8 sm:w-10 sm:h-10 text-pink-400"></i>
             `}
           </div>
+
+          ${isMaintenance ? `
+            <div class="absolute -bottom-1 px-2 py-0.5 rounded-full bg-amber-500 text-purple-950 font-black text-[9px] shadow-md flex items-center gap-0.5">
+              <i data-lucide="wrench" class="w-2.5 h-2.5"></i>
+              <span>ปิดปรับปรุง</span>
+            </div>
+          ` : ''}
         </div>
 
         <!-- Title & Information -->
@@ -266,7 +373,7 @@ export function renderDepartmentGrid(container) {
               <span class="truncate text-[9px] sm:text-[11px]">${formatDisplayUrl(link.link)}</span>
             </span>
             <span class="hidden sm:inline text-[10px] text-purple-400/40 group-hover:text-pink-300 transition-colors flex-shrink-0">
-              แตะเปิด ➔
+              ${isMaintenance ? 'แจ้งปิด ➔' : 'แตะเปิด ➔'}
             </span>
           </div>
         </div>

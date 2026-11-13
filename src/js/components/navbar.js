@@ -12,7 +12,7 @@ export function renderNavbar(container) {
 
   function update() {
     const state = store.get();
-    const { config, activeRole, theme, isAdmin, searchQuery, currentView, activeDepartment } = state;
+    const { config, activeRole, theme, isAdmin, searchQuery, currentView, activeDepartment, favorites = [] } = state;
 
     // In admin view, hide the public navbar so the dedicated admin header takes over
     if (currentView === 'admin') {
@@ -125,17 +125,30 @@ export function renderNavbar(container) {
             <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
               ${CONFIG.ROLES.map(role => {
                 const isActive = activeRole === role.id;
+                const isFavRole = role.id === 'favorites';
+                const countBadge = isFavRole && favorites.length > 0 
+                  ? `<span class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] ${isActive ? 'bg-white/25 text-white' : 'bg-amber-500/20 text-amber-300 font-mono font-bold'}">${favorites.length}</span>` 
+                  : '';
+                
+                let activeClass = 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md shadow-pink-500/30 border border-pink-400 scale-105';
+                if (isFavRole && isActive) {
+                  activeClass = 'bg-gradient-to-r from-amber-500 to-pink-500 text-white shadow-md shadow-amber-500/30 border border-amber-300 scale-105';
+                }
+
                 return `
                   <button 
                     data-role-id="${role.id}" 
                     class="role-pill-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0 whitespace-nowrap cursor-pointer ${
                       isActive 
-                        ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md shadow-pink-500/30 border border-pink-400 scale-105' 
-                        : 'bg-purple-950/20 hover:bg-purple-900/40 text-purple-300/80 border border-pink-500/15 hover:border-pink-500/30'
+                        ? activeClass 
+                        : isFavRole && favorites.length > 0
+                          ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300/90 border border-amber-500/30'
+                          : 'bg-purple-950/20 hover:bg-purple-900/40 text-purple-300/80 border border-pink-500/15 hover:border-pink-500/30'
                     }"
                   >
-                    <i data-lucide="${role.icon}" class="w-3.5 h-3.5"></i>
+                    <i data-lucide="${role.icon}" class="w-3.5 h-3.5 ${isFavRole ? (isActive ? 'text-amber-200 fill-amber-200' : 'text-amber-400') : ''}"></i>
                     <span>${role.label}</span>
+                    ${countBadge}
                   </button>
                 `;
               }).join('')}

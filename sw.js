@@ -23,7 +23,8 @@ const PRECACHE_ASSETS = [
   './src/js/components/orbitHero.js',
   './src/js/components/departmentGrid.js',
   './src/js/components/adminView.js',
-  './src/js/components/installModal.js'
+  './src/js/components/installModal.js',
+  './src/js/components/reportModal.js'
 ];
 
 // 1. Install Event: Pre-cache core shell assets

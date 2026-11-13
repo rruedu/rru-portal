@@ -52,6 +52,21 @@ function doPost(e) {
       return jsonResponse_({ success: false, error: 'รหัสผ่าน PIN ไม่ถูกต้อง' });
     }
 
+    // 2. Public Action: Report Broken Link / System Issue (No PIN required)
+    if (action === 'reportIssue') {
+      const lock = LockService.getScriptLock();
+      const hasLock = lock.tryLock(10000);
+      if (!hasLock) {
+        return jsonResponse_({ success: false, error: 'ระบบไม่พร้อมรับข้อมูลชั่วคราว กรุณาลองใหม่อีกครั้ง' });
+      }
+      try {
+        const reportResult = addIssueReport_(payload);
+        return jsonResponse_({ success: true, message: 'ส่งรายงานปัญหาสำเร็จ ขอขอบคุณที่ช่วยแจ้งข้อมูลครับ', ...reportResult });
+      } finally {
+        lock.releaseLock();
+      }
+    }
+
     // All subsequent actions require valid PIN
     if (!checkAdminPin_(payload.pin)) {
       return jsonResponse_({ success: false, error: 'สิทธิ์ไม่ถูกต้อง (Unauthorized: Invalid PIN)' });
@@ -90,18 +105,20 @@ function doPost(e) {
       }
       try {
         const sheet = getLinksSheet_();
-        ensureIdColumn_(sheet);
+        ensureIdAndStatusColumns_(sheet);
         const newId = payload.id || ('rru_' + Date.now().toString(36) + '_' + Utilities.getUuid().slice(0, 6));
+        const status = (payload.status === 'maintenance') ? 'maintenance' : 'active';
         const newRow = [
           payload.role || 'all',
           payload.group || 'กลุ่มบริหารทั่วไป',
           payload.systemName || '',
           payload.iconUrl || '',
           payload.link || '#',
-          newId
+          newId,
+          status
         ];
         sheet.appendRow(newRow);
-        return jsonResponse_({ success: true, message: 'เพิ่มลิงก์บริการสำเร็จ', id: newId });
+        return jsonResponse_({ success: true, message: 'เพิ่มลิงก์บริการสำเร็จ', id: newId, status: status });
       } finally {
         lock.releaseLock();
       }
@@ -116,7 +133,7 @@ function doPost(e) {
       }
       try {
         const sheet = getLinksSheet_();
-        ensureIdColumn_(sheet);
+        ensureIdAndStatusColumns_(sheet);
         const targetRow = findRowIndexByIdOrIndex_(sheet, payload.id, payload.rowIndex);
         if (targetRow < 2) {
           return jsonResponse_({ success: false, error: 'ไม่พบรายการที่ต้องการแก้ไข (Invalid ID or rowIndex)' });
@@ -124,22 +141,58 @@ function doPost(e) {
         
         // Preserve existing ID or set provided ID
         const existingId = sheet.getRange(targetRow, 6).getValue() || payload.id || ('rru_' + Date.now().toString(36) + '_' + Utilities.getUuid().slice(0, 6));
+        const currentStatus = sheet.getLastColumn() >= 7 ? sheet.getRange(targetRow, 7).getValue() : 'active';
+        const newStatus = payload.status !== undefined ? (payload.status === 'maintenance' ? 'maintenance' : 'active') : (currentStatus || 'active');
 
-        sheet.getRange(targetRow, 1, 1, 6).setValues([[
+        sheet.getRange(targetRow, 1, 1, 7).setValues([[
           payload.role || 'all',
           payload.group || 'กลุ่มบริหารทั่วไป',
           payload.systemName || '',
           payload.iconUrl || '',
           payload.link || '#',
-          existingId
+          existingId,
+          newStatus
         ]]);
-        return jsonResponse_({ success: true, message: 'แก้ไขข้อมูลลิงก์สำเร็จ', id: existingId, rowIndex: targetRow });
+        return jsonResponse_({ success: true, message: 'แก้ไขข้อมูลลิงก์สำเร็จ', id: existingId, rowIndex: targetRow, status: newStatus });
       } finally {
         lock.releaseLock();
       }
     }
 
-    // 7. Delete Service Link
+    // 7. Toggle Link Status (Active <-> Maintenance)
+    if (action === 'toggleLinkStatus') {
+      const lock = LockService.getScriptLock();
+      const hasLock = lock.tryLock(10000);
+      if (!hasLock) {
+        return jsonResponse_({ success: false, error: 'ระบบกำลังประมวลผลคำขออื่น กรุณาลองใหม่อีกครั้ง' });
+      }
+      try {
+        const sheet = getLinksSheet_();
+        ensureIdAndStatusColumns_(sheet);
+        const targetRow = findRowIndexByIdOrIndex_(sheet, payload.id, payload.rowIndex);
+        if (targetRow < 2) {
+          return jsonResponse_({ success: false, error: 'ไม่พบรายการที่ต้องการสลับสถานะ' });
+        }
+
+        let newStatus = payload.status;
+        if (!newStatus) {
+          const current = String(sheet.getRange(targetRow, 7).getValue() || '').trim().toLowerCase();
+          newStatus = (current === 'maintenance') ? 'active' : 'maintenance';
+        }
+
+        sheet.getRange(targetRow, 7).setValue(newStatus);
+        return jsonResponse_({ 
+          success: true, 
+          message: 'สลับสถานะเป็น ' + (newStatus === 'maintenance' ? 'ปิดปรับปรุง' : 'พร้อมใช้งาน'), 
+          status: newStatus, 
+          rowIndex: targetRow 
+        });
+      } finally {
+        lock.releaseLock();
+      }
+    }
+
+    // 8. Delete Service Link
     if (action === 'deleteLink') {
       const lock = LockService.getScriptLock();
       const hasLock = lock.tryLock(10000);
@@ -157,6 +210,18 @@ function doPost(e) {
       } finally {
         lock.releaseLock();
       }
+    }
+
+    // 9. Get Issue Reports (Admin only)
+    if (action === 'getReports') {
+      const reports = getIssueReports_();
+      return jsonResponse_({ success: true, reports: reports });
+    }
+
+    // 10. Resolve or Delete Issue Report (Admin only)
+    if (action === 'resolveReport') {
+      const result = resolveIssueReport_(payload);
+      return jsonResponse_({ success: true, ...result });
     }
 
     return jsonResponse_({ success: false, error: 'Unknown POST action: ' + action });
@@ -187,6 +252,7 @@ function getPortalData_() {
       const iconUrl = String(row[3] || '').trim();
       const link = String(row[4] || '').trim();
       let id = String(row[5] || '').trim();
+      let status = String(row[6] || '').trim().toLowerCase();
 
       // Skip empty separator rows
       if (!role && !group && !systemName && !link) {
@@ -196,6 +262,11 @@ function getPortalData_() {
       // Auto-correct typo in sheet if present
       if (group === 'กลุ่มบริหารทั่งไป') {
         group = 'กลุ่มบริหารทั่วไป';
+      }
+
+      // Default status to active if empty
+      if (!status || (status !== 'maintenance' && status !== 'inactive')) {
+        status = 'active';
       }
 
       // If id is missing in sheet row, provide deterministic ID fallback
@@ -211,7 +282,8 @@ function getPortalData_() {
         systemName: systemName,
         iconUrl: normalizeImageUrl_(iconUrl),
         rawIconUrl: iconUrl,
-        link: link
+        link: link,
+        status: status
       });
     }
   }
@@ -399,9 +471,9 @@ function jsonResponse_(obj) {
 }
 
 /**
- * Ensure column 6 has the 'ID' header if not present
+ * Ensure column 6 has 'ID' and column 7 has 'Status' headers if not present
  */
-function ensureIdColumn_(sheet) {
+function ensureIdAndStatusColumns_(sheet) {
   try {
     const lastCol = sheet.getLastColumn();
     if (lastCol < 6) {
@@ -414,8 +486,116 @@ function ensureIdColumn_(sheet) {
         sheet.getRange(1, 6).setFontWeight('bold');
       }
     }
+
+    if (lastCol < 7) {
+      sheet.getRange(1, 7).setValue('Status');
+      sheet.getRange(1, 7).setFontWeight('bold');
+    } else {
+      const statusHeader = sheet.getRange(1, 7).getValue();
+      if (!statusHeader) {
+        sheet.getRange(1, 7).setValue('Status');
+        sheet.getRange(1, 7).setFontWeight('bold');
+      }
+    }
   } catch (e) {
     // Non-fatal if header styling fails
+  }
+}
+
+/**
+ * Backward-compatible alias
+ */
+function ensureIdColumn_(sheet) {
+  ensureIdAndStatusColumns_(sheet);
+}
+
+/**
+ * Reports Sheet Management
+ */
+const REPORTS_SHEET_NAME = 'Reports';
+
+function getReportsSheet_(ss) {
+  const spreadsheet = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(REPORTS_SHEET_NAME);
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(REPORTS_SHEET_NAME);
+    sheet.appendRow(['Report ID', 'Timestamp', 'Link ID', 'System Name', 'Issue Type', 'Note', 'Status']);
+    sheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function addIssueReport_(payload) {
+  const sheet = getReportsSheet_();
+  const reportId = 'rep_' + Date.now().toString(36) + '_' + Utilities.getUuid().slice(0, 4);
+  const timestamp = Utilities.formatDate(new Date(), 'Asia/Bangkok', 'yyyy-MM-dd HH:mm:ss');
+  const row = [
+    reportId,
+    timestamp,
+    payload.linkId || '',
+    payload.systemName || '',
+    payload.issueType || 'ลิงก์เสีย / เข้าไม่ได้',
+    payload.note || '',
+    'pending' // 'pending' | 'resolved'
+  ];
+  sheet.appendRow(row);
+  return { reportId: reportId, timestamp: timestamp };
+}
+
+function getIssueReports_() {
+  const sheet = getReportsSheet_();
+  const data = sheet.getDataRange().getValues();
+  const reports = [];
+  if (data.length > 1) {
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (!row[0] && !row[3]) continue;
+      reports.push({
+        rowIndex: i + 1,
+        reportId: String(row[0] || ''),
+        timestamp: String(row[1] || ''),
+        linkId: String(row[2] || ''),
+        systemName: String(row[3] || ''),
+        issueType: String(row[4] || ''),
+        note: String(row[5] || ''),
+        status: String(row[6] || 'pending').toLowerCase()
+      });
+    }
+  }
+  reports.reverse(); // latest first
+  return reports;
+}
+
+function resolveIssueReport_(payload) {
+  const sheet = getReportsSheet_();
+  const reportId = payload.reportId;
+  const rowIndex = parseInt(payload.rowIndex, 10);
+  const data = sheet.getDataRange().getValues();
+  let targetRow = -1;
+
+  if (reportId) {
+    const targetId = String(reportId).trim();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0] || '').trim() === targetId) {
+        targetRow = i + 1;
+        break;
+      }
+    }
+  }
+  if (targetRow === -1 && rowIndex >= 2 && rowIndex <= data.length) {
+    targetRow = rowIndex;
+  }
+
+  if (targetRow < 2) {
+    throw new Error('ไม่พบรายงานที่ต้องการทำรายการ');
+  }
+
+  if (payload.actionType === 'delete') {
+    sheet.deleteRow(targetRow);
+    return { message: 'ลบรายงานปัญหาสำเร็จ' };
+  } else {
+    sheet.getRange(targetRow, 7).setValue('resolved');
+    return { message: 'เปลี่ยนสถานะเป็นแก้ไขแล้ว' };
   }
 }
 

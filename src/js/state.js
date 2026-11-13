@@ -4,6 +4,14 @@
 
 class StateStore {
   constructor() {
+    let savedFavorites = [];
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('rru_favorites');
+        if (raw) savedFavorites = JSON.parse(raw);
+      } catch (e) {}
+    }
+
     this.state = {
       links: [],
       config: {
@@ -18,6 +26,7 @@ class StateStore {
       activeRole: 'all',
       activeDepartment: null, // dept id, e.g. 'academic'
       searchQuery: '',
+      favorites: Array.isArray(savedFavorites) ? savedFavorites : [],
       theme: (typeof localStorage !== 'undefined' ? localStorage.getItem('rru_theme') : 'dark') || 'dark',
       isAdmin: false,
       adminPin: '',
@@ -136,7 +145,36 @@ class StateStore {
   }
 
   setActiveRole(role) {
+    if (role === 'favorites') {
+      // When clicking favorites, transition to department/list view if on hub
+      if (this.state.currentView === 'hub') {
+        this.set({ activeRole: role, currentView: 'department', activeDepartment: null });
+        return;
+      }
+    }
     this.set({ activeRole: role });
+  }
+
+  toggleFavorite(linkId) {
+    if (!linkId) return false;
+    let favs = [...(this.state.favorites || [])];
+    const exists = favs.includes(linkId);
+    if (exists) {
+      favs = favs.filter(id => id !== linkId);
+    } else {
+      favs.push(linkId);
+    }
+    this.set({ favorites: favs });
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('rru_favorites', JSON.stringify(favs));
+      } catch (e) {}
+    }
+    return !exists;
+  }
+
+  isFavorite(linkId) {
+    return Boolean(this.state.favorites && this.state.favorites.includes(linkId));
   }
 
   setAdmin(isAdmin, pin = '') {

@@ -11,7 +11,7 @@ import { escapeHtml, refreshIcons, showToast, normalizeDriveImage, compressImage
 export function renderAdminView(container) {
   if (!container) return;
 
-  let activeTab = 'links'; // 'links' | 'branding' | 'announcement' | 'settings'
+  let activeTab = 'links'; // 'links' | 'reports' | 'branding' | 'announcement' | 'settings'
   let editingLink = null;
   let isMobileDrawerOpen = false;
   let isAddFormVisible = false; // toggle add/edit form visibility
@@ -20,6 +20,10 @@ export function renderAdminView(container) {
   let linkSearchQuery = '';
   let linkDeptFilter = 'all';
   let linkRoleFilter = 'all';
+
+  // Issue reports state
+  let reportsList = [];
+  let isLoadingReports = false;
 
   function update() {
     const state = store.get();
@@ -319,8 +323,10 @@ export function renderAdminView(container) {
 
   // --- Nav Menu Markup Helper ---
   function getNavMenuItemsMarkup() {
+    const pendingReportsCount = reportsList.filter(r => r.status === 'pending').length;
     const items = [
       { id: 'links', label: 'จัดการลิงก์ระบบงาน', icon: 'link-2', badge: 'CRUD' },
+      { id: 'reports', label: 'รายงานปัญหาลิงก์', icon: 'flag', badge: pendingReportsCount > 0 ? `${pendingReportsCount} ใหม่` : '' },
       { id: 'branding', label: 'แบนเนอร์ & โลโก้ รร.', icon: 'image', badge: 'Drive' },
       { id: 'announcement', label: 'ข้อความประกาศด่วน', icon: 'bell', badge: '' },
       { id: 'settings', label: 'การเชื่อมต่อ & รหัส PIN', icon: 'settings', badge: '' }
@@ -342,7 +348,7 @@ export function renderAdminView(container) {
             <span>${item.label}</span>
           </div>
           ${item.badge ? `
-            <span class="text-[9px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-pink-500/15 text-pink-300'}">
+            <span class="text-[9px] px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}">
               ${item.badge}
             </span>
           ` : ''}
@@ -355,6 +361,9 @@ export function renderAdminView(container) {
   function renderActiveTabContent(tab, state) {
     if (tab === 'links') {
       return renderLinksManagementTab(state);
+    }
+    if (tab === 'reports') {
+      return renderReportsTab();
     }
     if (tab === 'branding') {
       return renderBrandingTab(state.config);
@@ -551,6 +560,15 @@ export function renderAdminView(container) {
               </div>
             </div>
 
+            <!-- Service Link Status Selector -->
+            <div class="sm:col-span-2 min-w-0">
+              <label class="block text-xs font-semibold text-purple-200 mb-1">สถานะระบบงาน *</label>
+              <select id="field-link-status" class="w-full min-w-0 px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none">
+                <option value="active" ${!editingLink || editingLink.status !== 'maintenance' ? 'selected' : ''}>พร้อมใช้งาน (Active) - บุคลากรเข้าถึงได้ปกติ</option>
+                <option value="maintenance" ${editingLink && editingLink.status === 'maintenance' ? 'selected' : ''}>ปิดปรับปรุงชั่วคราว (Maintenance) - แสดงป้ายเตือนก่อนเข้าใช้งาน</option>
+              </select>
+            </div>
+
             <div class="sm:col-span-2 flex items-center justify-end gap-2 pt-2">
               <button 
                 type="submit" 
@@ -661,6 +679,10 @@ export function renderAdminView(container) {
                           <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 font-medium border border-purple-500/25 whitespace-nowrap">
                             สำหรับ: ${roleLabel}
                           </span>
+                          <span class="text-[10px] px-2 py-0.5 rounded-full ${item.status === 'maintenance' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'} font-medium border whitespace-nowrap flex items-center gap-1">
+                            <i data-lucide="${item.status === 'maintenance' ? 'wrench' : 'check'}" class="w-2.5 h-2.5"></i>
+                            <span>${item.status === 'maintenance' ? 'ปิดปรับปรุง' : 'พร้อมใช้งาน'}</span>
+                          </span>
                           <span class="text-[9px] font-mono text-purple-300/50 ml-auto sm:ml-0">
                             #${item.rowIndex}
                           </span>
@@ -688,14 +710,27 @@ export function renderAdminView(container) {
                         <i data-lucide="external-link" class="w-3 h-3 flex-shrink-0 opacity-50 group-hover/link:opacity-100 ml-auto"></i>
                       </a>
 
-                      <!-- Action Buttons: Edit & Delete -->
+                      <!-- Action Buttons: Status Toggle, Edit & Delete -->
                       <div class="flex items-center gap-1.5 flex-shrink-0 ml-auto sm:ml-0">
+                        <!-- Quick Toggle Status Button -->
+                        <button 
+                          data-action="toggle-status" 
+                          data-id="${item.id || ''}" 
+                          data-row-index="${item.rowIndex}" 
+                          data-current-status="${item.status || 'active'}"
+                          class="btn-action-toggle-status px-2 sm:px-2.5 py-1.5 rounded-xl ${item.status === 'maintenance' ? 'bg-amber-600/30 hover:bg-emerald-600 text-amber-200 hover:text-white border border-amber-500/40' : 'bg-purple-900/40 hover:bg-amber-600 text-purple-200 hover:text-white border border-purple-500/30'} text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+                          title="สลับสถานะ: ${item.status === 'maintenance' ? 'คลิกเพื่อเปิดใช้งาน' : 'คลิกเพื่อปิดปรับปรุง'}"
+                        >
+                          <i data-lucide="power" class="w-3.5 h-3.5 ${item.status === 'maintenance' ? 'text-amber-300' : 'text-purple-300'}"></i>
+                          <span class="text-[11px]">${item.status === 'maintenance' ? 'เปิด' : 'ปิด'}</span>
+                        </button>
+
                         <!-- Edit Button -->
                         <button 
                           data-action="edit" 
-                          data-id="${item.id || ''}"
-                          data-row-index="${item.rowIndex}"
-                          class="btn-action-edit px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-900/40 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/30 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+                          data-id="${item.id || ''}" 
+                          data-row-index="${item.rowIndex}" 
+                          class="btn-action-edit px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-900/40 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/30 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95" 
                           title="แก้ไขข้อมูลระบบนี้"
                         >
                           <i data-lucide="edit-3" class="w-3.5 h-3.5 text-pink-300"></i>
@@ -729,7 +764,127 @@ export function renderAdminView(container) {
     `;
   }
 
-  // --- TAB 2: Branding (Logo, Banner, Names) ---
+  // --- TAB 2: Reports Directory (Issue Reports from Users) ---
+  function renderReportsTab() {
+    const pendingCount = reportsList.filter(r => r.status === 'pending').length;
+
+    return `
+      <div class="space-y-6">
+        <!-- Header Section -->
+        <div class="glass-panel p-4 sm:p-5 rounded-3xl border border-pink-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-purple-100 flex items-center gap-2">
+              <i data-lucide="flag" class="w-5 h-5 text-amber-400"></i>
+              <span>ศูนย์รับแจ้งปัญหาและลิงก์เสีย (Issue Reports)</span>
+              ${pendingCount > 0 ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">${pendingCount} รอดำเนินการ</span>` : ''}
+            </h2>
+            <p class="text-xs text-purple-300/70 mt-0.5">
+              รายงานปัญหาที่นักเรียน ผู้ปกครอง หรือครูส่งเข้ามาผ่านปุ่มแจ้งปัญหาในการ์ดระบบงาน
+            </p>
+          </div>
+
+          <button 
+            id="btn-refresh-reports"
+            class="px-3.5 py-2 rounded-xl bg-purple-900/40 hover:bg-purple-800 text-purple-200 hover:text-white border border-pink-500/20 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+          >
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 ${isLoadingReports ? 'animate-spin' : ''}"></i>
+            <span>รีเฟรชข้อมูล</span>
+          </button>
+        </div>
+
+        <!-- Reports List Body -->
+        ${isLoadingReports ? `
+          <div class="py-16 text-center text-purple-300 text-xs flex flex-col items-center justify-center gap-2">
+            <span class="animate-spin text-2xl text-pink-400">◌</span>
+            <span>กำลังโหลดรายงานปัญหาจาก Google Sheets...</span>
+          </div>
+        ` : reportsList.length === 0 ? `
+          <div class="py-16 text-center glass-panel rounded-3xl border border-dashed border-pink-500/20 max-w-md mx-auto p-6">
+            <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3 border border-emerald-500/20">
+              <i data-lucide="check-circle" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-sm sm:text-base font-bold text-purple-100">ไม่มีรายงานปัญหาค้างอยู่</h4>
+            <p class="text-xs text-purple-300/70 mt-1 leading-relaxed">
+              ทุกลิงก์และระบบงานใช้งานได้ปกติ ยังไม่มีผู้ใช้งานแจ้งปัญหาเข้ามาในขณะนี้
+            </p>
+          </div>
+        ` : `
+          <div class="space-y-3">
+            ${reportsList.map(rep => {
+              const isResolved = rep.status === 'resolved';
+              return `
+                <div class="glass-panel p-4 rounded-2xl border ${isResolved ? 'border-purple-500/15 opacity-75' : 'border-amber-500/30 bg-amber-950/15'} flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all">
+                  <div class="space-y-1.5 min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-[10px] px-2 py-0.5 rounded-full font-bold border ${isResolved ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'}">
+                        ${isResolved ? '✓ แก้ไขแล้ว' : '⏳ รอดำเนินการ'}
+                      </span>
+                      <h4 class="text-xs sm:text-sm font-extrabold text-purple-100">${escapeHtml(rep.systemName || 'ไม่ระบุชื่อระบบ')}</h4>
+                      <span class="text-[10px] font-mono text-purple-300/50">${escapeHtml(rep.timestamp || '')}</span>
+                    </div>
+
+                    <div class="text-xs text-pink-300/90 font-medium">
+                      ลักษณะปัญหา: <span class="text-purple-200 font-normal">${escapeHtml(rep.issueType || '')}</span>
+                    </div>
+
+                    ${rep.note ? `
+                      <div class="text-xs text-purple-200/90 bg-purple-950/40 p-2.5 rounded-xl border border-pink-500/15 leading-relaxed">
+                        ${escapeHtml(rep.note)}
+                      </div>
+                    ` : ''}
+                  </div>
+
+                  <div class="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
+                    ${!isResolved ? `
+                      <button 
+                        data-action="resolve-report" 
+                        data-report-id="${rep.reportId}" 
+                        data-row-index="${rep.rowIndex}"
+                        class="btn-resolve-report px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600 text-emerald-200 hover:text-white border border-emerald-500/40 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                        title="ทำเครื่องหมายว่าแก้ไขแล้ว"
+                      >
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        <span>แก้ไขแล้ว</span>
+                      </button>
+                    ` : ''}
+
+                    <button 
+                      data-action="delete-report" 
+                      data-report-id="${rep.reportId}" 
+                      data-row-index="${rep.rowIndex}"
+                      class="btn-delete-report px-2.5 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                      title="ลบรายงานนี้ออกจากระบบ"
+                    >
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                      <span>ลบ</span>
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  // Helper to load issue reports
+  async function loadReports() {
+    isLoadingReports = true;
+    update();
+    try {
+      const { adminPin } = store.get();
+      const res = await callGasApi('getReports', { pin: adminPin });
+      reportsList = res.reports || [];
+    } catch (err) {
+      showToast(`โหลดรายงานปัญหาไม่สำเร็จ: ${err.message}`, 'error');
+    } finally {
+      isLoadingReports = false;
+      update();
+    }
+  }
+
+  // --- TAB 3: Branding (Logo, Banner, Names) ---
   function renderBrandingTab(config) {
     return `
       <div class="space-y-6">
@@ -940,7 +1095,11 @@ export function renderAdminView(container) {
         activeTab = btn.dataset.tabTarget;
         isMobileDrawerOpen = false;
         editingLink = null;
-        update();
+        if (activeTab === 'reports' && reportsList.length === 0) {
+          loadReports();
+        } else {
+          update();
+        }
       });
     });
 
@@ -976,8 +1135,12 @@ export function renderAdminView(container) {
       });
     }
 
-    // 6. Tab 1 Specific Events: Links Management
+    // 6. Delegate Tab Events
     if (activeTab === 'links') {
+      bindLinksTabEvents();
+    } else if (activeTab === 'reports') {
+      bindReportsTabEvents();
+    }
       bindLinksTabEvents();
     }
 
@@ -1136,6 +1299,7 @@ export function renderAdminView(container) {
         const link = container.querySelector('#field-link-target-url').value.trim();
         const rawIconUrl = container.querySelector('#field-link-icon-url').value.trim();
         const iconUrl = normalizeDriveImage(rawIconUrl);
+        const status = container.querySelector('#field-link-status')?.value || 'active';
 
         const submitBtn = container.querySelector('#btn-save-link-action');
         submitBtn.disabled = true;
@@ -1154,21 +1318,22 @@ export function renderAdminView(container) {
             role,
             systemName,
             link,
-            iconUrl
+            iconUrl,
+            status
           });
 
           // Sync state locally
           if (isEditing) {
             const idx = links.findIndex(l => (linkId && l.id === linkId) || (rowIndex && String(l.rowIndex) === String(rowIndex)));
             if (idx !== -1) {
-              links[idx] = { ...links[idx], group, role, systemName, link, iconUrl, id: res.id || links[idx].id || linkId };
+              links[idx] = { ...links[idx], group, role, systemName, link, iconUrl, status, id: res.id || links[idx].id || linkId };
             }
           } else {
             const newId = res.id || ('rru_' + Date.now().toString(36));
             links.push({
               id: newId,
               rowIndex: links.length + 2,
-              group, role, systemName, link, iconUrl
+              group, role, systemName, link, iconUrl, status
             });
           }
           store.set({ links: [...links] });
@@ -1235,6 +1400,43 @@ export function renderAdminView(container) {
       });
     });
 
+    // Toggle Status buttons (Active <-> Maintenance)
+    const toggleStatusButtons = container.querySelectorAll('.btn-action-toggle-status');
+    toggleStatusButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const rowIndex = btn.dataset.rowIndex;
+        const currentStatus = btn.dataset.currentStatus || 'active';
+        const nextStatus = (currentStatus === 'maintenance') ? 'active' : 'maintenance';
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin text-xs">◌</span>';
+
+        const { adminPin, links } = store.get();
+        try {
+          await callGasApi('toggleLinkStatus', {
+            pin: adminPin,
+            id: id || undefined,
+            rowIndex: rowIndex || undefined,
+            status: nextStatus
+          });
+
+          // Sync state locally
+          const idx = links.findIndex(l => (id && l.id === id) || (rowIndex && String(l.rowIndex) === String(rowIndex)));
+          if (idx !== -1) {
+            links[idx] = { ...links[idx], status: nextStatus };
+            store.set({ links: [...links] });
+          }
+
+          showToast(`สลับสถานะเป็น "${nextStatus === 'maintenance' ? 'ปิดปรับปรุงชั่วคราว' : 'พร้อมใช้งาน'}" สำเร็จ`, 'success');
+          update();
+        } catch (err) {
+          showToast(`สลับสถานะไม่สำเร็จ: ${err.message}`, 'error');
+          update();
+        }
+      });
+    });
+
     // Delete Link buttons
     const deleteButtons = container.querySelectorAll('.btn-action-delete');
     deleteButtons.forEach(btn => {
@@ -1262,6 +1464,75 @@ export function renderAdminView(container) {
             btn.disabled = false;
             btn.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ลบ';
             refreshIcons(btn);
+          }
+        }
+      });
+    });
+  }
+
+  // --- Reports Tab Event Handlers ---
+  function bindReportsTabEvents() {
+    const refreshBtn = container.querySelector('#btn-refresh-reports');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        loadReports();
+      });
+    }
+
+    const resolveButtons = container.querySelectorAll('.btn-resolve-report');
+    resolveButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const reportId = btn.dataset.reportId;
+        const rowIndex = btn.dataset.rowIndex;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin text-xs">◌</span>';
+
+        const { adminPin } = store.get();
+        try {
+          await callGasApi('resolveReport', {
+            pin: adminPin,
+            reportId,
+            rowIndex,
+            actionType: 'resolve'
+          });
+
+          const rep = reportsList.find(r => r.reportId === reportId);
+          if (rep) rep.status = 'resolved';
+
+          showToast('ทำเครื่องหมายว่าแก้ไขแล้วเรียบร้อย', 'success');
+          update();
+        } catch (err) {
+          showToast(`ทำรายการไม่สำเร็จ: ${err.message}`, 'error');
+          btn.disabled = false;
+        }
+      });
+    });
+
+    const deleteButtons = container.querySelectorAll('.btn-delete-report');
+    deleteButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const reportId = btn.dataset.reportId;
+        const rowIndex = btn.dataset.rowIndex;
+
+        if (confirm('คุณต้องการลบรายงานนี้ออกจากระบบใช่หรือไม่?')) {
+          btn.disabled = true;
+          btn.innerHTML = '<span class="animate-spin text-xs">◌</span>';
+
+          const { adminPin } = store.get();
+          try {
+            await callGasApi('resolveReport', {
+              pin: adminPin,
+              reportId,
+              rowIndex,
+              actionType: 'delete'
+            });
+
+            reportsList = reportsList.filter(r => r.reportId !== reportId);
+            showToast('ลบรายงานปัญหาสำเร็จ', 'success');
+            update();
+          } catch (err) {
+            showToast(`ลบไม่สำเร็จ: ${err.message}`, 'error');
+            btn.disabled = false;
           }
         }
       });

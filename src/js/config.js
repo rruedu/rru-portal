@@ -63,6 +63,7 @@ export const CONFIG = {
 
   ROLES: [
     { id: 'all', label: 'ทั้งหมด', icon: 'layout-grid' },
+    { id: 'favorites', label: 'รายการโปรด', icon: 'star' },
     { id: 'student', label: 'นักเรียน', icon: 'backpack' },
     { id: 'parent', label: 'ผู้ปกครอง', icon: 'heart-handshake' },
     { id: 'teacher', label: 'ครู / บุคลากร', icon: 'briefcase' }

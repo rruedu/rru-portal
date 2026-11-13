@@ -10,6 +10,7 @@ import { renderOrbitHero } from './components/orbitHero.js';
 import { renderDepartmentGrid } from './components/departmentGrid.js';
 import { renderAdminView } from './components/adminView.js';
 import { initPwaInstall } from './components/installModal.js';
+import { renderReportModal } from './components/reportModal.js';
 import { refreshIcons } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -32,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderOrbitHero(document.getElementById('orbit-container'));
   renderDepartmentGrid(document.getElementById('departments-container'));
   renderAdminView(document.getElementById('admin-view-container'));
+  renderReportModal(document.getElementById('report-modal-container'));
   initPwaInstall(document.getElementById('pwa-modal-container'));
 
   refreshIcons();

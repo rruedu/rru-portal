@@ -76,5 +76,18 @@ _Avoid_: Row number, Line index
 The resilient service worker caching layer guaranteeing full offline accessibility through static asset pre-caching, API stale fallback, and runtime CDN caching.
 _Avoid_: Browser reload, Empty cache
 
+**Favorite Services (ระบบงานโปรด)**:
+Client-persisted bookmarking enabling students, teachers, and parents to pin frequently accessed applications to a dedicated quick-access filter with one tap.
+_Avoid_: Starred list, Bookmarks bar
+
+**Service Operational Status (สถานะความพร้อมของระบบงาน)**:
+An administrative availability state (`active` or `maintenance`) signaling whether a digital application is fully operational or temporarily undergoing maintenance, accompanied by warning gates.
+_Avoid_: Link state, Flag
+
+**Issue Reporting Pipeline (ระบบรับแจ้งปัญหาและลิงก์เสีย)**:
+A community feedback loop allowing users to submit broken links or permission issues directly from service cards into an administrative triage queue on Google Sheets.
+_Avoid_: Bug tracker, Contact form
+
+
 
 
