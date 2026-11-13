@@ -38,6 +38,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   refreshIcons();
 
+  // Loading Screen Dismissal Helper
+  function hideLoader() {
+    const loader = document.getElementById('initial-loader');
+    if (loader && !loader.classList.contains('pointer-events-none')) {
+      loader.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        if (loader.parentNode) loader.remove();
+      }, 400);
+    }
+  }
+
+  // Failsafe: Automatically dismiss initial loader within 1.8s regardless of network delays
+  const failsafeTimer = setTimeout(hideLoader, 1800);
+
   // 4. Fetch Live Portal Data
   try {
     const data = await fetchPortalData();
@@ -51,12 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     console.warn('Initial data load warning:', err);
     store.set({ isLoading: false });
-  }
-
-  // Remove initial loading screen
-  const loader = document.getElementById('initial-loader');
-  if (loader) {
-    loader.classList.add('opacity-0', 'pointer-events-none');
-    setTimeout(() => loader.remove(), 400);
+  } finally {
+    clearTimeout(failsafeTimer);
+    hideLoader();
   }
 });

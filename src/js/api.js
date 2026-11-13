@@ -30,12 +30,16 @@ const INITIAL_SEED_LINKS = [
 
 export async function fetchPortalData() {
   const customUrl = localStorage.getItem('rru_gas_url') || CONFIG.GAS_API_URL;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
 
   try {
     const res = await fetch(`${customUrl}?action=getData`, {
       method: 'GET',
-      headers: { 'Accept': 'application/json' }
+      headers: { 'Accept': 'application/json' },
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();

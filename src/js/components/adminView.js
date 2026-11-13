@@ -1761,21 +1761,20 @@ export function renderAdminView(container) {
         btn.innerHTML = '<span class="animate-spin text-xs">◌</span>';
 
         const { adminPin } = store.get();
-          try {
-            await callGasApi('resolveReport', {
-              pin: adminPin,
-              reportId,
-              rowIndex,
-              actionType: 'delete'
-            });
+        try {
+          await callGasApi('resolveReport', {
+            pin: adminPin,
+            reportId,
+            rowIndex,
+            actionType: 'delete'
+          });
 
-            reportsList = reportsList.filter(r => r.reportId !== reportId);
-            showToast('ลบรายงานปัญหาสำเร็จ', 'success');
-            update();
-          } catch (err) {
-            showToast(`ลบไม่สำเร็จ: ${err.message}`, 'error');
-            btn.disabled = false;
-          }
+          reportsList = reportsList.filter(r => r.reportId !== reportId);
+          showToast('ลบรายงานปัญหาสำเร็จ', 'success');
+          update();
+        } catch (err) {
+          showToast(`ลบไม่สำเร็จ: ${err.message}`, 'error');
+          btn.disabled = false;
         }
       });
     });
