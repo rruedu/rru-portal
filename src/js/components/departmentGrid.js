@@ -6,7 +6,7 @@
 
 import { store } from '../state.js';
 import { CONFIG } from '../config.js';
-import { escapeHtml, refreshIcons, formatDisplayUrl, normalizeDriveImage, showToast } from '../utils.js';
+import { escapeHtml, refreshIcons, formatDisplayUrl, normalizeDriveImage, showToast, confirmAction } from '../utils.js';
 import { recordClick } from '../api.js';
 
 export function renderDepartmentGrid(container) {
@@ -255,15 +255,25 @@ export function renderDepartmentGrid(container) {
     // Click Analytics Tracking & Maintenance Warning on Cards
     const appCards = container.querySelectorAll('.service-app-card');
     appCards.forEach(card => {
-      card.addEventListener('click', (e) => {
+      card.addEventListener('click', async (e) => {
         const isMaintenance = card.dataset.status === 'maintenance';
         const sysName = card.dataset.systemName || 'ระบบงานนี้';
         
         if (isMaintenance) {
-          if (!confirm(`แจ้งเตือน: "${sysName}" กำลังอยู่ระหว่างปิดปรับปรุงชั่วคราวโดยผู้ดูแลระบบ\n\nคุณยังต้องการเปิดลิงก์ไปยังระบบนี้อยู่หรือไม่?`)) {
-            e.preventDefault();
-            return;
+          e.preventDefault();
+          const targetHref = card.getAttribute('href');
+          const proceed = await confirmAction({
+            title: 'ระบบกำลังปิดปรับปรุง',
+            message: `"${sysName}" กำลังอยู่ระหว่างปิดปรับปรุงชั่วคราวโดยผู้ดูแลระบบ คุณยังต้องการเปิดลิงก์ไปยังระบบนี้อยู่หรือไม่?`,
+            confirmText: 'เปิดลิงก์ต่อไป',
+            cancelText: 'ย้อนกลับ',
+            icon: 'info',
+            isDanger: false
+          });
+          if (proceed && targetHref && targetHref !== '#') {
+            window.open(targetHref, '_blank', 'noopener,noreferrer');
           }
+          return;
         }
 
         // Record telemetry analytics

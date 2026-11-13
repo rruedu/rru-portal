@@ -6,7 +6,7 @@
 import { store } from '../state.js';
 import { CONFIG } from '../config.js';
 import { callGasApi } from '../api.js';
-import { escapeHtml, refreshIcons, showToast, normalizeDriveImage, compressImage, formatDisplayUrl } from '../utils.js';
+import { escapeHtml, refreshIcons, showToast, normalizeDriveImage, compressImage, formatDisplayUrl, confirmDelete, confirmAction } from '../utils.js';
 
 export function renderAdminView(container) {
   if (!container) return;
@@ -1674,26 +1674,30 @@ export function renderAdminView(container) {
         const rowIndex = btn.dataset.rowIndex;
         const systemName = btn.dataset.systemName;
 
-        if (confirm(`คุณต้องการลบ "${systemName}" ออกจากระบบและ Google Sheet ใช่หรือไม่?`)) {
-          btn.disabled = true;
-          btn.innerHTML = '<span class="animate-spin">◌</span>';
+        const confirmed = await confirmDelete(
+          `ลบระบบงาน "${systemName}"?`,
+          'ระบบนี้จะถูกนำออกจากหน้าเว็บและ Google Sheet ทันที และไม่สามารถกู้คืนได้'
+        );
+        if (!confirmed) return;
 
-          const { adminPin, links } = store.get();
-          try {
-            await callGasApi('deleteLink', { pin: adminPin, id: id || undefined, rowIndex: rowIndex || undefined });
-            const nextLinks = links.filter(l => (id ? l.id !== id : String(l.rowIndex) !== String(rowIndex)));
-            store.set({ links: nextLinks });
-            showToast(`ลบ "${systemName}" สำเร็จเรียบร้อยแล้ว`, 'success');
-            if (editingLink && ((id && editingLink.id === id) || (rowIndex && String(editingLink.rowIndex) === String(rowIndex)))) {
-              editingLink = null;
-            }
-            update();
-          } catch (err) {
-            showToast(`ลบไม่สำเร็จ: ${err.message}`, 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ลบ';
-            refreshIcons(btn);
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin">◌</span>';
+
+        const { adminPin, links } = store.get();
+        try {
+          await callGasApi('deleteLink', { pin: adminPin, id: id || undefined, rowIndex: rowIndex || undefined });
+          const nextLinks = links.filter(l => (id ? l.id !== id : String(l.rowIndex) !== String(rowIndex)));
+          store.set({ links: nextLinks });
+          showToast(`ลบ "${systemName}" สำเร็จเรียบร้อยแล้ว`, 'success');
+          if (editingLink && ((id && editingLink.id === id) || (rowIndex && String(editingLink.rowIndex) === String(rowIndex)))) {
+            editingLink = null;
           }
+          update();
+        } catch (err) {
+          showToast(`ลบไม่สำเร็จ: ${err.message}`, 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ลบ';
+          refreshIcons(btn);
         }
       });
     });
@@ -1743,11 +1747,20 @@ export function renderAdminView(container) {
         const reportId = btn.dataset.reportId;
         const rowIndex = btn.dataset.rowIndex;
 
-        if (confirm('คุณต้องการลบรายงานนี้ออกจากระบบใช่หรือไม่?')) {
-          btn.disabled = true;
-          btn.innerHTML = '<span class="animate-spin text-xs">◌</span>';
+        const confirmed = await confirmAction({
+          title: 'ลบรายงานปัญหานี้?',
+          message: 'รายงานนี้จะถูกนำออกจากระบบตรวจสอบของผู้ดูแล',
+          confirmText: 'ลบรายงาน',
+          cancelText: 'ยกเลิก',
+          icon: 'warning',
+          isDanger: true
+        });
+        if (!confirmed) return;
 
-          const { adminPin } = store.get();
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin text-xs">◌</span>';
+
+        const { adminPin } = store.get();
           try {
             await callGasApi('resolveReport', {
               pin: adminPin,
@@ -1838,9 +1851,16 @@ export function renderAdminView(container) {
             }
 
             const linkCount = backupData.links.length;
-            const confirmMsg = `ยืนยันการกู้คืนข้อมูลสำรองหรือไม่?\n\n• ระบบงานที่จะถูกกู้คืน: ${linkCount} รายการ\n• ข้อมูลลิงก์ปัจจุบันใน Google Sheets จะถูกแทนที่ด้วยข้อมูลจากไฟล์สำรองนี้\n\nกด "ตกลง (OK)" เพื่อดำเนินการต่อ`;
+            const confirmed = await confirmAction({
+              title: 'ยืนยันการกู้คืนข้อมูลสำรอง?',
+              message: `ระบบงานที่จะถูกกู้คืน: ${linkCount} รายการ โดยข้อมูลลิงก์ปัจจุบันใน Google Sheets จะถูกเขียนแทนที่ด้วยข้อมูลจากไฟล์สำรองนี้`,
+              confirmText: 'กู้คืนข้อมูล',
+              cancelText: 'ยกเลิก',
+              icon: 'warning',
+              isDanger: true
+            });
             
-            if (!confirm(confirmMsg)) {
+            if (!confirmed) {
               restoreFileInput.value = '';
               return;
             }
@@ -2037,16 +2057,21 @@ export function renderAdminView(container) {
 
   document.addEventListener('admin-delete-link', async (e) => {
     const { id, rowIndex, systemName } = e.detail;
-    if (confirm(`คุณต้องการลบ "${systemName}" ออกจากระบบและ Google Sheet ใช่หรือไม่?`)) {
-      const { adminPin, links } = store.get();
-      try {
-        await callGasApi('deleteLink', { pin: adminPin, id: id || undefined, rowIndex: rowIndex || undefined });
-        const nextLinks = links.filter(l => (id ? l.id !== id : String(l.rowIndex) !== String(rowIndex)));
-        store.set({ links: nextLinks });
-        showToast(`ลบ "${systemName}" สำเร็จเรียบร้อยแล้ว`, 'success');
-      } catch (err) {
-        showToast(`ลบไม่สำเร็จ: ${err.message}`, 'error');
-      }
+    const confirmed = await confirmDelete(
+      `ลบระบบงาน "${systemName}"?`,
+      'ระบบนี้จะถูกนำออกจากหน้าเว็บและ Google Sheet ทันที และไม่สามารถกู้คืนได้'
+    );
+    if (!confirmed) return;
+
+    const { adminPin, links } = store.get();
+    try {
+      showToast(`กำลังลบ "${systemName}" ออกจาก Google Sheets...`, 'info');
+      await callGasApi('deleteLink', { pin: adminPin, id: id || undefined, rowIndex: rowIndex || undefined });
+      const nextLinks = links.filter(l => (id ? l.id !== id : String(l.rowIndex) !== String(rowIndex)));
+      store.set({ links: nextLinks });
+      showToast(`ลบ "${systemName}" สำเร็จเรียบร้อยแล้ว`, 'success');
+    } catch (err) {
+      showToast(`ลบไม่สำเร็จ: ${err.message}`, 'error');
     }
   });
 

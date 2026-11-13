@@ -1,11 +1,11 @@
 /**
  * RRU School Portal - Progressive Web App Service Worker
- * Version: v3.5.0 (Light Theme Announcement Banner Support)
+ * Version: v3.6.0 (SweetAlert2 Modern Dialogs Integration)
  */
 
-const STATIC_CACHE = 'rru-static-v3-5';
-const API_CACHE = 'rru-api-v3-5';
-const RUNTIME_CACHE = 'rru-runtime-v3-5';
+const STATIC_CACHE = 'rru-static-v3-6';
+const API_CACHE = 'rru-api-v3-6';
+const RUNTIME_CACHE = 'rru-runtime-v3-6';
 
 const PRECACHE_ASSETS = [
   './',

@@ -157,3 +157,59 @@ export function refreshIcons(root = document) {
     window.lucide.createIcons({ root });
   }
 }
+
+/**
+ * Modern Custom SweetAlert2 Delete Confirmation
+ */
+export async function confirmDelete(title, message = 'ข้อมูลจะถูกลบออกจากระบบและ Google Sheet ทันที และไม่สามารถกู้คืนได้') {
+  if (window.Swal) {
+    const isLight = document.documentElement.classList.contains('light');
+    const result = await Swal.fire({
+      title: title || 'ยืนยันการลบรายการ?',
+      html: `<div style="font-size: 0.875rem; margin-top: 6px; line-height: 1.6; color: ${isLight ? '#475569' : '#d8b4fe'};">${escapeHtml(message)}</div>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '<i class="lucide-trash-2 inline-block mr-1"></i> ยืนยันการลบ',
+      cancelButtonText: 'ยกเลิก',
+      reverseButtons: true,
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rru-swal-popup',
+        title: 'rru-swal-title',
+        confirmButton: 'rru-swal-btn-danger',
+        cancelButton: 'rru-swal-btn-cancel'
+      },
+      backdrop: `rgba(10, 6, 22, ${isLight ? '0.45' : '0.8'})`
+    });
+    return result.isConfirmed;
+  }
+  return window.confirm(`${title}\n\n${message}`);
+}
+
+/**
+ * Modern Custom SweetAlert2 Action Confirmation
+ */
+export async function confirmAction({ title, message, confirmText = 'ตกลง', cancelText = 'ยกเลิก', icon = 'question', isDanger = false }) {
+  if (window.Swal) {
+    const isLight = document.documentElement.classList.contains('light');
+    const result = await Swal.fire({
+      title: title,
+      html: `<div style="font-size: 0.875rem; margin-top: 6px; line-height: 1.6; color: ${isLight ? '#475569' : '#d8b4fe'};">${escapeHtml(message)}</div>`,
+      icon: icon,
+      showCancelButton: true,
+      confirmButtonText: confirmText,
+      cancelButtonText: cancelText,
+      reverseButtons: true,
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rru-swal-popup',
+        title: 'rru-swal-title',
+        confirmButton: isDanger ? 'rru-swal-btn-danger' : 'rru-swal-btn-primary',
+        cancelButton: 'rru-swal-btn-cancel'
+      },
+      backdrop: `rgba(10, 6, 22, ${isLight ? '0.45' : '0.8'})`
+    });
+    return result.isConfirmed;
+  }
+  return window.confirm(`${title}\n\n${message}`);
+}
