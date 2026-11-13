@@ -1,16 +1,21 @@
 /**
  * RRU School Portal - Progressive Web App Service Worker
- * Version: v3.1.0 (Favorites Resilient Fallback Fix)
+ * Version: v3.2.0 (Open Graph & School Crest Assets)
  */
 
-const STATIC_CACHE = 'rru-static-v3-1';
-const API_CACHE = 'rru-api-v3-1';
-const RUNTIME_CACHE = 'rru-runtime-v3-1';
+const STATIC_CACHE = 'rru-static-v3-2';
+const API_CACHE = 'rru-api-v3-2';
+const RUNTIME_CACHE = 'rru-runtime-v3-2';
 
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './assets/logo.png',
+  './assets/favicon.png',
+  './assets/icon-192.png',
+  './assets/icon-512.png',
+  './assets/og-image.png',
   './src/styles/main.css',
   './src/styles/orbit.css',
   './src/js/app.js',
