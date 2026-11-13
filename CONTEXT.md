@@ -68,5 +68,13 @@ _Avoid_: External image hosting, Raw binary paste
 The focused service grid displaying application links as prominent 3D squircle app icons with unified violet-pink branding, interactive launch badges, and staggered entry motion.
 _Avoid_: Simple link list, Flat table
 
+**Unique Link Identifier (รหัสประจำระบบงาน)**:
+A stable, collision-free identifier assigned to each service link, preventing data corruption during concurrent administrative edits or Google Sheet row shifts.
+_Avoid_: Row number, Line index
+
+**Multi-tier PWA Cache (ระบบแคชออฟไลน์หลายระดับ)**:
+The resilient service worker caching layer guaranteeing full offline accessibility through static asset pre-caching, API stale fallback, and runtime CDN caching.
+_Avoid_: Browser reload, Empty cache
+
 
 

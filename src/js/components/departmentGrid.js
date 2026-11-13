@@ -171,8 +171,9 @@ export function renderDepartmentGrid(container) {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
+          const id = btn.dataset.id;
           const rowIndex = btn.dataset.rowIndex;
-          document.dispatchEvent(new CustomEvent('admin-edit-link', { detail: { rowIndex } }));
+          document.dispatchEvent(new CustomEvent('admin-edit-link', { detail: { id, rowIndex } }));
         });
       });
 
@@ -181,9 +182,10 @@ export function renderDepartmentGrid(container) {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
+          const id = btn.dataset.id;
           const rowIndex = btn.dataset.rowIndex;
           const systemName = btn.dataset.systemName;
-          document.dispatchEvent(new CustomEvent('admin-delete-link', { detail: { rowIndex, systemName } }));
+          document.dispatchEvent(new CustomEvent('admin-delete-link', { detail: { id, rowIndex, systemName } }));
         });
       });
     }
@@ -272,6 +274,7 @@ export function renderDepartmentGrid(container) {
         ${isAdmin ? `
           <div class="mt-2 pt-1.5 border-t border-pink-500/15 flex items-center justify-center sm:justify-end gap-1.5" onclick="event.preventDefault(); event.stopPropagation();">
             <button 
+              data-id="${link.id || ''}"
               data-row-index="${link.rowIndex}" 
               class="btn-admin-edit-link p-1.5 rounded-lg bg-purple-900/40 hover:bg-pink-600 text-purple-200 hover:text-white transition-all text-xs font-semibold" 
               title="แก้ไขลิงก์นี้"
@@ -279,6 +282,7 @@ export function renderDepartmentGrid(container) {
               <i data-lucide="pencil" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
             </button>
             <button 
+              data-id="${link.id || ''}"
               data-row-index="${link.rowIndex}" 
               data-system-name="${escapeHtml(link.systemName)}"
               class="btn-admin-delete-link p-1.5 rounded-lg bg-purple-900/40 hover:bg-rose-600 text-rose-300 hover:text-white transition-all text-xs font-semibold" 

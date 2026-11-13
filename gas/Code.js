@@ -83,44 +83,80 @@ function doPost(e) {
 
     // 5. Add New Service Link
     if (action === 'addLink') {
-      const newRow = [
-        payload.role || 'all',
-        payload.group || 'กลุ่มบริหารทั่วไป',
-        payload.systemName || '',
-        payload.iconUrl || '',
-        payload.link || '#'
-      ];
-      const sheet = getLinksSheet_();
-      sheet.appendRow(newRow);
-      return jsonResponse_({ success: true, message: 'เพิ่มลิงก์บริการสำเร็จ' });
+      const lock = LockService.getScriptLock();
+      const hasLock = lock.tryLock(10000);
+      if (!hasLock) {
+        return jsonResponse_({ success: false, error: 'ระบบกำลังประมวลผลคำขออื่น กรุณาลองใหม่อีกครั้ง' });
+      }
+      try {
+        const sheet = getLinksSheet_();
+        ensureIdColumn_(sheet);
+        const newId = payload.id || ('rru_' + Date.now().toString(36) + '_' + Utilities.getUuid().slice(0, 6));
+        const newRow = [
+          payload.role || 'all',
+          payload.group || 'กลุ่มบริหารทั่วไป',
+          payload.systemName || '',
+          payload.iconUrl || '',
+          payload.link || '#',
+          newId
+        ];
+        sheet.appendRow(newRow);
+        return jsonResponse_({ success: true, message: 'เพิ่มลิงก์บริการสำเร็จ', id: newId });
+      } finally {
+        lock.releaseLock();
+      }
     }
 
     // 6. Update Service Link
     if (action === 'updateLink') {
-      const rowIndex = parseInt(payload.rowIndex, 10);
-      if (!rowIndex || rowIndex < 2) {
-        return jsonResponse_({ success: false, error: 'Invalid rowIndex' });
+      const lock = LockService.getScriptLock();
+      const hasLock = lock.tryLock(10000);
+      if (!hasLock) {
+        return jsonResponse_({ success: false, error: 'ระบบกำลังประมวลผลคำขออื่น กรุณาลองใหม่อีกครั้ง' });
       }
-      const sheet = getLinksSheet_();
-      sheet.getRange(rowIndex, 1, 1, 5).setValues([[
-        payload.role || 'all',
-        payload.group || 'กลุ่มบริหารทั่วไป',
-        payload.systemName || '',
-        payload.iconUrl || '',
-        payload.link || '#'
-      ]]);
-      return jsonResponse_({ success: true, message: 'แก้ไขข้อมูลลิงก์สำเร็จ' });
+      try {
+        const sheet = getLinksSheet_();
+        ensureIdColumn_(sheet);
+        const targetRow = findRowIndexByIdOrIndex_(sheet, payload.id, payload.rowIndex);
+        if (targetRow < 2) {
+          return jsonResponse_({ success: false, error: 'ไม่พบรายการที่ต้องการแก้ไข (Invalid ID or rowIndex)' });
+        }
+        
+        // Preserve existing ID or set provided ID
+        const existingId = sheet.getRange(targetRow, 6).getValue() || payload.id || ('rru_' + Date.now().toString(36) + '_' + Utilities.getUuid().slice(0, 6));
+
+        sheet.getRange(targetRow, 1, 1, 6).setValues([[
+          payload.role || 'all',
+          payload.group || 'กลุ่มบริหารทั่วไป',
+          payload.systemName || '',
+          payload.iconUrl || '',
+          payload.link || '#',
+          existingId
+        ]]);
+        return jsonResponse_({ success: true, message: 'แก้ไขข้อมูลลิงก์สำเร็จ', id: existingId, rowIndex: targetRow });
+      } finally {
+        lock.releaseLock();
+      }
     }
 
     // 7. Delete Service Link
     if (action === 'deleteLink') {
-      const rowIndex = parseInt(payload.rowIndex, 10);
-      if (!rowIndex || rowIndex < 2) {
-        return jsonResponse_({ success: false, error: 'Invalid rowIndex' });
+      const lock = LockService.getScriptLock();
+      const hasLock = lock.tryLock(10000);
+      if (!hasLock) {
+        return jsonResponse_({ success: false, error: 'ระบบกำลังประมวลผลคำขออื่น กรุณาลองใหม่อีกครั้ง' });
       }
-      const sheet = getLinksSheet_();
-      sheet.deleteRow(rowIndex);
-      return jsonResponse_({ success: true, message: 'ลบลิงก์สำเร็จ' });
+      try {
+        const sheet = getLinksSheet_();
+        const targetRow = findRowIndexByIdOrIndex_(sheet, payload.id, payload.rowIndex);
+        if (targetRow < 2) {
+          return jsonResponse_({ success: false, error: 'ไม่พบรายการที่ต้องการลบ (Invalid ID or rowIndex)' });
+        }
+        sheet.deleteRow(targetRow);
+        return jsonResponse_({ success: true, message: 'ลบลิงก์สำเร็จ', rowIndex: targetRow });
+      } finally {
+        lock.releaseLock();
+      }
     }
 
     return jsonResponse_({ success: false, error: 'Unknown POST action: ' + action });
@@ -150,6 +186,7 @@ function getPortalData_() {
       const systemName = String(row[2] || '').trim();
       const iconUrl = String(row[3] || '').trim();
       const link = String(row[4] || '').trim();
+      let id = String(row[5] || '').trim();
 
       // Skip empty separator rows
       if (!role && !group && !systemName && !link) {
@@ -161,8 +198,14 @@ function getPortalData_() {
         group = 'กลุ่มบริหารทั่วไป';
       }
 
+      // If id is missing in sheet row, provide deterministic ID fallback
+      if (!id) {
+        id = 'rru_link_' + (i + 1);
+      }
+
       links.push({
-        rowIndex: i + 1, // 1-based index in sheet for updates/deletes
+        id: id,
+        rowIndex: i + 1, // 1-based index in sheet for backwards compatibility
         role: role.toLowerCase(),
         group: group,
         systemName: systemName,
@@ -353,4 +396,53 @@ function getOrCreateAssetFolder_() {
 function jsonResponse_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Ensure column 6 has the 'ID' header if not present
+ */
+function ensureIdColumn_(sheet) {
+  try {
+    const lastCol = sheet.getLastColumn();
+    if (lastCol < 6) {
+      sheet.getRange(1, 6).setValue('ID');
+      sheet.getRange(1, 6).setFontWeight('bold');
+    } else {
+      const headerVal = sheet.getRange(1, 6).getValue();
+      if (!headerVal) {
+        sheet.getRange(1, 6).setValue('ID');
+        sheet.getRange(1, 6).setFontWeight('bold');
+      }
+    }
+  } catch (e) {
+    // Non-fatal if header styling fails
+  }
+}
+
+/**
+ * Find 1-based row index by unique ID, with graceful fallback to rowIndex
+ */
+function findRowIndexByIdOrIndex_(sheet, id, fallbackRowIndex) {
+  const dataRange = sheet.getDataRange();
+  const values = dataRange.getValues();
+
+  // 1. Try matching by unique ID
+  if (id) {
+    const targetId = String(id).trim();
+    for (let i = 1; i < values.length; i++) {
+      if (values[i].length >= 6 && String(values[i][5] || '').trim() === targetId) {
+        return i + 1;
+      }
+    }
+  }
+
+  // 2. Fallback to rowIndex if valid
+  if (fallbackRowIndex) {
+    const rIndex = parseInt(fallbackRowIndex, 10);
+    if (rIndex >= 2 && rIndex <= values.length) {
+      return rIndex;
+    }
+  }
+
+  return -1;
 }

@@ -417,7 +417,7 @@ export function renderAdminView(container) {
           <div class="flex items-center justify-between pb-3 mb-4 border-b border-pink-500/15">
             <h3 class="text-sm sm:text-base font-bold ${editingLink ? 'text-amber-300' : 'text-pink-300'} flex items-center gap-2">
               <i data-lucide="${editingLink ? 'edit-3' : 'plus-circle'}" class="w-4 h-4"></i>
-              <span>${editingLink ? `กำลังแก้ไขข้อมูล: ${escapeHtml(editingLink.systemName)} (แถวที่ ${editingLink.rowIndex})` : 'เพิ่มระบบงานใหม่เข้าสู่ Google Sheet'}</span>
+              <span>${editingLink ? `กำลังแก้ไขข้อมูล: ${escapeHtml(editingLink.systemName)}` : 'เพิ่มระบบงานใหม่เข้าสู่ Google Sheet'}</span>
             </h3>
 
             ${editingLink ? `
@@ -428,7 +428,8 @@ export function renderAdminView(container) {
           </div>
 
           <form id="admin-link-action-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
-            <input type="hidden" id="field-link-row-index" value="${editingLink ? editingLink.rowIndex : ''}" />
+            <input type="hidden" id="field-link-id" value="${editingLink && editingLink.id ? editingLink.id : ''}" />
+            <input type="hidden" id="field-link-row-index" value="${editingLink && editingLink.rowIndex ? editingLink.rowIndex : ''}" />
 
             <div class="min-w-0">
               <label class="block text-xs font-semibold text-purple-200 mb-1">กลุ่มบริหาร (ฝ่ายงาน) *</label>
@@ -692,6 +693,7 @@ export function renderAdminView(container) {
                         <!-- Edit Button -->
                         <button 
                           data-action="edit" 
+                          data-id="${item.id || ''}"
                           data-row-index="${item.rowIndex}"
                           class="btn-action-edit px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-900/40 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/30 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
                           title="แก้ไขข้อมูลระบบนี้"
@@ -703,6 +705,7 @@ export function renderAdminView(container) {
                         <!-- Delete Button -->
                         <button 
                           data-action="delete" 
+                          data-id="${item.id || ''}"
                           data-row-index="${item.rowIndex}"
                           data-system-name="${escapeHtml(item.systemName)}"
                           class="btn-action-delete px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
@@ -1125,6 +1128,7 @@ export function renderAdminView(container) {
     if (linkForm) {
       linkForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const linkId = container.querySelector('#field-link-id').value;
         const rowIndex = container.querySelector('#field-link-row-index').value;
         const group = container.querySelector('#field-link-group').value;
         const role = container.querySelector('#field-link-role').value;
@@ -1138,11 +1142,13 @@ export function renderAdminView(container) {
         submitBtn.innerHTML = '<span class="animate-spin mr-1">◌</span> กำลังบันทึกข้อมูล...';
 
         const { adminPin, links } = store.get();
-        const action = rowIndex ? 'updateLink' : 'addLink';
+        const isEditing = Boolean(linkId || rowIndex);
+        const action = isEditing ? 'updateLink' : 'addLink';
 
         try {
-          await callGasApi(action, {
+          const res = await callGasApi(action, {
             pin: adminPin,
+            id: linkId || undefined,
             rowIndex: rowIndex || undefined,
             group,
             role,
@@ -1152,20 +1158,22 @@ export function renderAdminView(container) {
           });
 
           // Sync state locally
-          if (rowIndex) {
-            const idx = links.findIndex(l => String(l.rowIndex) === String(rowIndex));
+          if (isEditing) {
+            const idx = links.findIndex(l => (linkId && l.id === linkId) || (rowIndex && String(l.rowIndex) === String(rowIndex)));
             if (idx !== -1) {
-              links[idx] = { ...links[idx], group, role, systemName, link, iconUrl };
+              links[idx] = { ...links[idx], group, role, systemName, link, iconUrl, id: res.id || links[idx].id || linkId };
             }
           } else {
+            const newId = res.id || ('rru_' + Date.now().toString(36));
             links.push({
+              id: newId,
               rowIndex: links.length + 2,
               group, role, systemName, link, iconUrl
             });
           }
           store.set({ links: [...links] });
 
-          showToast(rowIndex ? 'แก้ไขระบบงานสำเร็จเรียบร้อย' : 'เพิ่มระบบงานใหม่เข้าสู่ Sheet สำเร็จ', 'success');
+          showToast(isEditing ? 'แก้ไขระบบงานสำเร็จเรียบร้อย' : 'เพิ่มระบบงานใหม่เข้าสู่ Sheet สำเร็จ', 'success');
           editingLink = null;
           isAddFormVisible = false;
           update();
@@ -1216,9 +1224,10 @@ export function renderAdminView(container) {
     const editButtons = container.querySelectorAll('.btn-action-edit');
     editButtons.forEach(btn => {
       btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
         const rowIndex = btn.dataset.rowIndex;
         const { links } = store.get();
-        editingLink = links.find(l => String(l.rowIndex) === String(rowIndex)) || null;
+        editingLink = links.find(l => (id && l.id === id) || (rowIndex && String(l.rowIndex) === String(rowIndex))) || null;
         isAddFormVisible = true;
         update();
         const formCard = container.querySelector('#admin-link-form-card');
@@ -1230,20 +1239,21 @@ export function renderAdminView(container) {
     const deleteButtons = container.querySelectorAll('.btn-action-delete');
     deleteButtons.forEach(btn => {
       btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
         const rowIndex = btn.dataset.rowIndex;
         const systemName = btn.dataset.systemName;
 
-        if (confirm(`คุณต้องการลบ "${systemName}" (แถวที่ ${rowIndex}) ออกจากระบบและ Google Sheet ใช่หรือไม่?`)) {
+        if (confirm(`คุณต้องการลบ "${systemName}" ออกจากระบบและ Google Sheet ใช่หรือไม่?`)) {
           btn.disabled = true;
           btn.innerHTML = '<span class="animate-spin">◌</span>';
 
           const { adminPin, links } = store.get();
           try {
-            await callGasApi('deleteLink', { pin: adminPin, rowIndex });
-            const nextLinks = links.filter(l => String(l.rowIndex) !== String(rowIndex));
+            await callGasApi('deleteLink', { pin: adminPin, id: id || undefined, rowIndex: rowIndex || undefined });
+            const nextLinks = links.filter(l => (id ? l.id !== id : String(l.rowIndex) !== String(rowIndex)));
             store.set({ links: nextLinks });
             showToast(`ลบ "${systemName}" สำเร็จเรียบร้อยแล้ว`, 'success');
-            if (editingLink && String(editingLink.rowIndex) === String(rowIndex)) {
+            if (editingLink && ((id && editingLink.id === id) || (rowIndex && String(editingLink.rowIndex) === String(rowIndex)))) {
               editingLink = null;
             }
             update();
@@ -1397,21 +1407,21 @@ export function renderAdminView(container) {
   });
 
   document.addEventListener('admin-edit-link', (e) => {
-    const { rowIndex } = e.detail;
+    const { id, rowIndex } = e.detail;
     const { links } = store.get();
-    editingLink = links.find(l => String(l.rowIndex) === String(rowIndex)) || null;
+    editingLink = links.find(l => (id && l.id === id) || (rowIndex && String(l.rowIndex) === String(rowIndex))) || null;
     activeTab = 'links';
     isAddFormVisible = true;
     store.goToAdmin();
   });
 
   document.addEventListener('admin-delete-link', async (e) => {
-    const { rowIndex, systemName } = e.detail;
+    const { id, rowIndex, systemName } = e.detail;
     if (confirm(`คุณต้องการลบ "${systemName}" ออกจากระบบและ Google Sheet ใช่หรือไม่?`)) {
       const { adminPin, links } = store.get();
       try {
-        await callGasApi('deleteLink', { pin: adminPin, rowIndex });
-        const nextLinks = links.filter(l => String(l.rowIndex) !== String(rowIndex));
+        await callGasApi('deleteLink', { pin: adminPin, id: id || undefined, rowIndex: rowIndex || undefined });
+        const nextLinks = links.filter(l => (id ? l.id !== id : String(l.rowIndex) !== String(rowIndex)));
         store.set({ links: nextLinks });
         showToast(`ลบ "${systemName}" สำเร็จเรียบร้อยแล้ว`, 'success');
       } catch (err) {
