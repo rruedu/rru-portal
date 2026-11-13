@@ -67,6 +67,29 @@ function doPost(e) {
       }
     }
 
+    // 3. Public Action: Record Link Click Analytics (No PIN required)
+    if (action === 'recordClick') {
+      const lock = LockService.getScriptLock();
+      const hasLock = lock.tryLock(5000);
+      if (!hasLock) {
+        return jsonResponse_({ success: false, error: 'Server busy' });
+      }
+      try {
+        const sheet = getLinksSheet_();
+        ensureColumns_(sheet);
+        const targetRow = findRowIndexByIdOrIndex_(sheet, payload.id, payload.rowIndex);
+        if (targetRow >= 2) {
+          const currentClicks = parseInt(sheet.getRange(targetRow, 8).getValue(), 10) || 0;
+          const nextClicks = currentClicks + 1;
+          sheet.getRange(targetRow, 8).setValue(nextClicks);
+          return jsonResponse_({ success: true, clicks: nextClicks });
+        }
+        return jsonResponse_({ success: false, error: 'Item not found' });
+      } finally {
+        lock.releaseLock();
+      }
+    }
+
     // All subsequent actions require valid PIN
     if (!checkAdminPin_(payload.pin)) {
       return jsonResponse_({ success: false, error: 'สิทธิ์ไม่ถูกต้อง (Unauthorized: Invalid PIN)' });
@@ -105,9 +128,11 @@ function doPost(e) {
       }
       try {
         const sheet = getLinksSheet_();
-        ensureIdAndStatusColumns_(sheet);
+        ensureColumns_(sheet);
         const newId = payload.id || ('rru_' + Date.now().toString(36) + '_' + Utilities.getUuid().slice(0, 6));
         const status = (payload.status === 'maintenance') ? 'maintenance' : 'active';
+        const clicks = parseInt(payload.clicks, 10) || 0;
+        const priority = parseInt(payload.priority, 10) || 0;
         const newRow = [
           payload.role || 'all',
           payload.group || 'กลุ่มบริหารทั่วไป',
@@ -115,10 +140,12 @@ function doPost(e) {
           payload.iconUrl || '',
           payload.link || '#',
           newId,
-          status
+          status,
+          clicks,
+          priority
         ];
         sheet.appendRow(newRow);
-        return jsonResponse_({ success: true, message: 'เพิ่มลิงก์บริการสำเร็จ', id: newId, status: status });
+        return jsonResponse_({ success: true, message: 'เพิ่มลิงก์บริการสำเร็จ', id: newId, status: status, clicks: clicks, priority: priority });
       } finally {
         lock.releaseLock();
       }
@@ -133,7 +160,7 @@ function doPost(e) {
       }
       try {
         const sheet = getLinksSheet_();
-        ensureIdAndStatusColumns_(sheet);
+        ensureColumns_(sheet);
         const targetRow = findRowIndexByIdOrIndex_(sheet, payload.id, payload.rowIndex);
         if (targetRow < 2) {
           return jsonResponse_({ success: false, error: 'ไม่พบรายการที่ต้องการแก้ไข (Invalid ID or rowIndex)' });
@@ -143,17 +170,21 @@ function doPost(e) {
         const existingId = sheet.getRange(targetRow, 6).getValue() || payload.id || ('rru_' + Date.now().toString(36) + '_' + Utilities.getUuid().slice(0, 6));
         const currentStatus = sheet.getLastColumn() >= 7 ? sheet.getRange(targetRow, 7).getValue() : 'active';
         const newStatus = payload.status !== undefined ? (payload.status === 'maintenance' ? 'maintenance' : 'active') : (currentStatus || 'active');
+        const existingClicks = sheet.getLastColumn() >= 8 ? (parseInt(sheet.getRange(targetRow, 8).getValue(), 10) || 0) : 0;
+        const priority = payload.priority !== undefined ? (parseInt(payload.priority, 10) || 0) : (sheet.getLastColumn() >= 9 ? (parseInt(sheet.getRange(targetRow, 9).getValue(), 10) || 0) : 0);
 
-        sheet.getRange(targetRow, 1, 1, 7).setValues([[
+        sheet.getRange(targetRow, 1, 1, 9).setValues([[
           payload.role || 'all',
           payload.group || 'กลุ่มบริหารทั่วไป',
           payload.systemName || '',
           payload.iconUrl || '',
           payload.link || '#',
           existingId,
-          newStatus
+          newStatus,
+          existingClicks,
+          priority
         ]]);
-        return jsonResponse_({ success: true, message: 'แก้ไขข้อมูลลิงก์สำเร็จ', id: existingId, rowIndex: targetRow, status: newStatus });
+        return jsonResponse_({ success: true, message: 'แก้ไขข้อมูลลิงก์สำเร็จ', id: existingId, rowIndex: targetRow, status: newStatus, priority: priority, clicks: existingClicks });
       } finally {
         lock.releaseLock();
       }
@@ -168,7 +199,7 @@ function doPost(e) {
       }
       try {
         const sheet = getLinksSheet_();
-        ensureIdAndStatusColumns_(sheet);
+        ensureColumns_(sheet);
         const targetRow = findRowIndexByIdOrIndex_(sheet, payload.id, payload.rowIndex);
         if (targetRow < 2) {
           return jsonResponse_({ success: false, error: 'ไม่พบรายการที่ต้องการสลับสถานะ' });
@@ -224,6 +255,65 @@ function doPost(e) {
       return jsonResponse_({ success: true, ...result });
     }
 
+    // 11. Restore Backup (Admin only)
+    if (action === 'restoreBackup') {
+      const lock = LockService.getScriptLock();
+      const hasLock = lock.tryLock(25000);
+      if (!hasLock) {
+        return jsonResponse_({ success: false, error: 'ระบบกำลังประมวลผลคำขออื่น กรุณาลองใหม่อีกครั้ง' });
+      }
+      try {
+        const backupData = payload.backupData;
+        if (!backupData || !Array.isArray(backupData.links)) {
+          return jsonResponse_({ success: false, error: 'ข้อมูลสำรองไม่ถูกต้อง (Invalid backup payload)' });
+        }
+
+        // Restore Config values if present
+        if (backupData.config && typeof backupData.config === 'object') {
+          for (const [key, value] of Object.entries(backupData.config)) {
+            if (value !== undefined) {
+              setConfigValue_(key, String(value));
+            }
+          }
+        }
+
+        // Restore Links Sheet
+        const sheet = getLinksSheet_();
+        ensureColumns_(sheet);
+
+        const lastRow = sheet.getLastRow();
+        if (lastRow > 1) {
+          sheet.deleteRows(2, lastRow - 1);
+        }
+
+        const rowsToInsert = backupData.links.map((item, idx) => {
+          return [
+            item.role || 'all',
+            item.group || 'กลุ่มบริหารทั่วไป',
+            item.systemName || '',
+            item.iconUrl || item.rawIconUrl || '',
+            item.link || '#',
+            item.id || ('rru_' + Date.now().toString(36) + '_' + (idx + 1)),
+            item.status || 'active',
+            parseInt(item.clicks, 10) || 0,
+            parseInt(item.priority, 10) || 0
+          ];
+        });
+
+        if (rowsToInsert.length > 0) {
+          sheet.getRange(2, 1, rowsToInsert.length, 9).setValues(rowsToInsert);
+        }
+
+        return jsonResponse_({ 
+          success: true, 
+          message: `กู้คืนข้อมูลสำรองสำเร็จ (${rowsToInsert.length} ระบบงาน)`,
+          restoredCount: rowsToInsert.length 
+        });
+      } finally {
+        lock.releaseLock();
+      }
+    }
+
     return jsonResponse_({ success: false, error: 'Unknown POST action: ' + action });
   } catch (err) {
     return jsonResponse_({ success: false, error: err.toString() });
@@ -253,6 +343,8 @@ function getPortalData_() {
       const link = String(row[4] || '').trim();
       let id = String(row[5] || '').trim();
       let status = String(row[6] || '').trim().toLowerCase();
+      let clicks = parseInt(row[7], 10) || 0;
+      let priority = parseInt(row[8], 10) || 0;
 
       // Skip empty separator rows
       if (!role && !group && !systemName && !link) {
@@ -283,7 +375,9 @@ function getPortalData_() {
         iconUrl: normalizeImageUrl_(iconUrl),
         rawIconUrl: iconUrl,
         link: link,
-        status: status
+        status: status,
+        clicks: clicks,
+        priority: priority
       });
     }
   }
@@ -471,30 +565,28 @@ function jsonResponse_(obj) {
 }
 
 /**
- * Ensure column 6 has 'ID' and column 7 has 'Status' headers if not present
+ * Ensure columns 6 to 9 have headers ('ID', 'Status', 'Clicks', 'Priority') if not present
  */
-function ensureIdAndStatusColumns_(sheet) {
+function ensureColumns_(sheet) {
   try {
     const lastCol = sheet.getLastColumn();
-    if (lastCol < 6) {
-      sheet.getRange(1, 6).setValue('ID');
-      sheet.getRange(1, 6).setFontWeight('bold');
-    } else {
-      const headerVal = sheet.getRange(1, 6).getValue();
-      if (!headerVal) {
-        sheet.getRange(1, 6).setValue('ID');
-        sheet.getRange(1, 6).setFontWeight('bold');
-      }
-    }
+    const headers = [
+      [6, 'ID'],
+      [7, 'Status'],
+      [8, 'Clicks'],
+      [9, 'Priority']
+    ];
 
-    if (lastCol < 7) {
-      sheet.getRange(1, 7).setValue('Status');
-      sheet.getRange(1, 7).setFontWeight('bold');
-    } else {
-      const statusHeader = sheet.getRange(1, 7).getValue();
-      if (!statusHeader) {
-        sheet.getRange(1, 7).setValue('Status');
-        sheet.getRange(1, 7).setFontWeight('bold');
+    for (const [col, name] of headers) {
+      if (lastCol < col) {
+        sheet.getRange(1, col).setValue(name);
+        sheet.getRange(1, col).setFontWeight('bold');
+      } else {
+        const val = sheet.getRange(1, col).getValue();
+        if (!val) {
+          sheet.getRange(1, col).setValue(name);
+          sheet.getRange(1, col).setFontWeight('bold');
+        }
       }
     }
   } catch (e) {
@@ -503,10 +595,14 @@ function ensureIdAndStatusColumns_(sheet) {
 }
 
 /**
- * Backward-compatible alias
+ * Backward-compatible aliases
  */
+function ensureIdAndStatusColumns_(sheet) {
+  ensureColumns_(sheet);
+}
+
 function ensureIdColumn_(sheet) {
-  ensureIdAndStatusColumns_(sheet);
+  ensureColumns_(sheet);
 }
 
 /**

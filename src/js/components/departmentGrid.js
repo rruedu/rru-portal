@@ -1,11 +1,13 @@
 /**
  * RRU School Portal - Focused Department & Search Results Cards View
- * Includes Favorites System, Status Badges, and Broken Link Reporting
+ * Includes Favorites System, Status Badges, Broken Link Reporting,
+ * Priority Ordering, Click Tracking, & Flame Popular Badges 🔥
  */
 
 import { store } from '../state.js';
 import { CONFIG } from '../config.js';
 import { escapeHtml, refreshIcons, formatDisplayUrl, normalizeDriveImage, showToast } from '../utils.js';
+import { recordClick } from '../api.js';
 
 export function renderDepartmentGrid(container) {
   if (!container) return;
@@ -31,7 +33,7 @@ export function renderDepartmentGrid(container) {
       targetDept = CONFIG.DEPARTMENTS.find(d => d.id === activeDepartment) || null;
     }
 
-    const filteredLinks = links.filter(item => {
+    let filteredLinks = links.filter(item => {
       // Role filter
       if (isFavView) {
         if (!favorites.includes(item.id)) return false;
@@ -54,6 +56,21 @@ export function renderDepartmentGrid(container) {
 
       return true;
     });
+
+    // Priority Ordering: Higher priority numbers show first. Stable secondary sort by rowIndex.
+    filteredLinks.sort((a, b) => {
+      const pA = parseInt(a.priority, 10) || 0;
+      const pB = parseInt(b.priority, 10) || 0;
+      if (pB !== pA) return pB - pA;
+      return (parseInt(a.rowIndex, 10) || 0) - (parseInt(b.rowIndex, 10) || 0);
+    });
+
+    // Identify Top 3 Most Clicked Links Portal-wide (where clicks > 0)
+    const popularCandidates = links
+      .filter(l => (parseInt(l.clicks, 10) || 0) > 0)
+      .sort((a, b) => (parseInt(b.clicks, 10) || 0) - (parseInt(a.clicks, 10) || 0))
+      .slice(0, 3);
+    const popularIds = new Set(popularCandidates.map(c => c.id).filter(Boolean));
 
     container.innerHTML = `
       <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 view-enter relative">
@@ -138,7 +155,7 @@ export function renderDepartmentGrid(container) {
         <!-- Cards Grid (2 Columns on Mobile, Up to 5 on Desktop) -->
         ${filteredLinks.length > 0 ? `
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
-            ${filteredLinks.map((link, idx) => renderServiceCard(link, targetDept, isAdmin, idx, favorites.includes(link.id))).join('')}
+            ${filteredLinks.map((link, idx) => renderServiceCard(link, targetDept, isAdmin, idx, favorites.includes(link.id), popularIds.has(link.id))).join('')}
           </div>
 
           <!-- Single Clean Bottom Return to Hub Button -->
@@ -229,13 +246,26 @@ export function renderDepartmentGrid(container) {
       });
     });
 
-    // Maintenance Warning on Cards
-    const maintCards = container.querySelectorAll('.service-app-card[data-status="maintenance"]');
-    maintCards.forEach(card => {
+    // Click Analytics Tracking & Maintenance Warning on Cards
+    const appCards = container.querySelectorAll('.service-app-card');
+    appCards.forEach(card => {
       card.addEventListener('click', (e) => {
+        const isMaintenance = card.dataset.status === 'maintenance';
         const sysName = card.dataset.systemName || 'ระบบงานนี้';
-        if (!confirm(`แจ้งเตือน: "${sysName}" กำลังอยู่ระหว่างปิดปรับปรุงชั่วคราวโดยผู้ดูแลระบบ\n\nคุณยังต้องการเปิดลิงก์ไปยังระบบนี้อยู่หรือไม่?`)) {
-          e.preventDefault();
+        
+        if (isMaintenance) {
+          if (!confirm(`แจ้งเตือน: "${sysName}" กำลังอยู่ระหว่างปิดปรับปรุงชั่วคราวโดยผู้ดูแลระบบ\n\nคุณยังต้องการเปิดลิงก์ไปยังระบบนี้อยู่หรือไม่?`)) {
+            e.preventDefault();
+            return;
+          }
+        }
+
+        // Record telemetry analytics
+        const linkId = card.dataset.id;
+        const rowIndex = card.dataset.rowIndex;
+        if (linkId || rowIndex) {
+          recordClick(linkId, rowIndex);
+          if (linkId) store.incrementClick(linkId);
         }
       });
     });
@@ -267,7 +297,7 @@ export function renderDepartmentGrid(container) {
     }
   }
 
-  function renderServiceCard(link, dept, isAdmin, index = 0, isFavorite = false) {
+  function renderServiceCard(link, dept, isAdmin, index = 0, isFavorite = false, isPopular = false) {
     const roleColors = {
       student: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
       parent: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
@@ -292,6 +322,8 @@ export function renderDepartmentGrid(container) {
         href="${escapeHtml(link.link)}" 
         target="_blank" 
         rel="noopener noreferrer" 
+        data-id="${link.id || ''}"
+        data-row-index="${link.rowIndex || ''}"
         data-status="${isMaintenance ? 'maintenance' : 'active'}"
         data-system-name="${escapeHtml(link.systemName)}"
         class="service-app-card stagger-card glass-panel group relative flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl block text-center sm:text-left border ${isMaintenance ? 'border-amber-500/40 bg-amber-950/10' : 'border-pink-500/25 hover:border-pink-500/50'} active:scale-95 active:border-pink-400 active:shadow-pink-500/40 transition-all shadow-md select-none"
@@ -299,10 +331,20 @@ export function renderDepartmentGrid(container) {
       >
         <!-- Top Row: Role Badge & Actions (Favorite & Report) -->
         <div class="flex items-center justify-between gap-1 w-full mb-1 sm:mb-2">
-          <!-- Role Badge -->
-          <span class="text-[9px] sm:text-[11px] px-2 py-0.5 rounded-full border font-bold ${roleBadgeClass} truncate max-w-[75px] sm:max-w-none">
-            ${roleLabel}
-          </span>
+          
+          <!-- Badges: Role + Popular Flame -->
+          <div class="flex items-center gap-1 min-w-0">
+            <span class="text-[9px] sm:text-[11px] px-2 py-0.5 rounded-full border font-bold ${roleBadgeClass} truncate max-w-[65px] sm:max-w-none">
+              ${roleLabel}
+            </span>
+
+            ${isPopular ? `
+              <span class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 text-white font-extrabold shadow-sm shadow-orange-500/25 flex items-center gap-0.5 whitespace-nowrap" title="ระบบงานยอดนิยม (${link.clicks || 0} คลิก)">
+                <span>🔥</span>
+                <span class="hidden sm:inline">ยอดนิยม</span>
+              </span>
+            ` : ''}
+          </div>
 
           <!-- Quick Action Buttons: Favorite & Report -->
           <div class="flex items-center gap-1 flex-shrink-0" onclick="event.stopPropagation();">
@@ -379,24 +421,29 @@ export function renderDepartmentGrid(container) {
         </div>
 
         ${isAdmin ? `
-          <div class="mt-2 pt-1.5 border-t border-pink-500/15 flex items-center justify-center sm:justify-end gap-1.5" onclick="event.preventDefault(); event.stopPropagation();">
-            <button 
-              data-id="${link.id || ''}"
-              data-row-index="${link.rowIndex}" 
-              class="btn-admin-edit-link p-1.5 rounded-lg bg-purple-900/40 hover:bg-pink-600 text-purple-200 hover:text-white transition-all text-xs font-semibold" 
-              title="แก้ไขลิงก์นี้"
-            >
-              <i data-lucide="pencil" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
-            </button>
-            <button 
-              data-id="${link.id || ''}"
-              data-row-index="${link.rowIndex}" 
-              data-system-name="${escapeHtml(link.systemName)}"
-              class="btn-admin-delete-link p-1.5 rounded-lg bg-purple-900/40 hover:bg-rose-600 text-rose-300 hover:text-white transition-all text-xs font-semibold" 
-              title="ลบลิงก์นี้"
-            >
-              <i data-lucide="trash-2" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
-            </button>
+          <div class="mt-2 pt-1.5 border-t border-pink-500/15 flex items-center justify-between gap-1.5" onclick="event.preventDefault(); event.stopPropagation();">
+            <span class="text-[9px] font-mono text-purple-300/50">
+              P:${link.priority || 0} &bull; ${link.clicks || 0}c
+            </span>
+            <div class="flex items-center gap-1">
+              <button 
+                data-id="${link.id || ''}"
+                data-row-index="${link.rowIndex}" 
+                class="btn-admin-edit-link p-1.5 rounded-lg bg-purple-900/40 hover:bg-pink-600 text-purple-200 hover:text-white transition-all text-xs font-semibold" 
+                title="แก้ไขลิงก์นี้"
+              >
+                <i data-lucide="pencil" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
+              </button>
+              <button 
+                data-id="${link.id || ''}"
+                data-row-index="${link.rowIndex}" 
+                data-system-name="${escapeHtml(link.systemName)}"
+                class="btn-admin-delete-link p-1.5 rounded-lg bg-purple-900/40 hover:bg-rose-600 text-rose-300 hover:text-white transition-all text-xs font-semibold" 
+                title="ลบลิงก์นี้"
+              >
+                <i data-lucide="trash-2" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
+              </button>
+            </div>
           </div>
         ` : ''}
       </a>

@@ -177,6 +177,16 @@ class StateStore {
     return Boolean(this.state.favorites && this.state.favorites.includes(linkId));
   }
 
+  incrementClick(linkId) {
+    if (!linkId) return;
+    const links = [...(this.state.links || [])];
+    const item = links.find(l => l.id === linkId);
+    if (item) {
+      item.clicks = (parseInt(item.clicks, 10) || 0) + 1;
+      this.set({ links });
+    }
+  }
+
   setAdmin(isAdmin, pin = '') {
     this.set({ isAdmin, adminPin: pin });
   }

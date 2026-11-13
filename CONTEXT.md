@@ -88,6 +88,23 @@ _Avoid_: Link state, Flag
 A community feedback loop allowing users to submit broken links or permission issues directly from service cards into an administrative triage queue on Google Sheets.
 _Avoid_: Bug tracker, Contact form
 
+**Click Tracking Analytics (สถิติการเข้าใช้งานระบบงาน)**:
+Non-blocking telemetry tracking usage frequency of each school digital service without delaying user navigation, powering the most popular app rankings and portal-wide metrics.
+_Avoid_: Hit counter, Web tracker
+
+**Popular Flame Badge (ป้ายระบบงานยอดนิยม)**:
+A high-visibility dynamic flame badge (`🔥 ยอดนิยม`) highlighted on top-ranking applications portal-wide to guide users toward the most frequently utilized school resources.
+_Avoid_: Hot link, Trending tag
+
+**Priority Custom Ordering (การจัดลำดับความสำคัญของระบบงาน)**:
+Configurable priority weight assigned to service links enabling school administrators to promote key institutional systems to the top of the launchpad regardless of creation date.
+_Avoid_: Manual row drag, Pinned link
+
+**Portal Backup Archive (การสำรองและกู้คืนฐานข้อมูลระบบ)**:
+Standardized JSON snapshot export and full-fidelity restore capability that safeguards all Google Sheets services, metadata, configuration, and telemetry against accidental deletion or corruption.
+_Avoid_: Database dump, Sheet copy
+
+
 
 
 

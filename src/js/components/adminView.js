@@ -11,7 +11,7 @@ import { escapeHtml, refreshIcons, showToast, normalizeDriveImage, compressImage
 export function renderAdminView(container) {
   if (!container) return;
 
-  let activeTab = 'links'; // 'links' | 'reports' | 'branding' | 'announcement' | 'settings'
+  let activeTab = 'links'; // 'links' | 'reports' | 'analytics' | 'branding' | 'announcement' | 'settings'
   let editingLink = null;
   let isMobileDrawerOpen = false;
   let isAddFormVisible = false; // toggle add/edit form visibility
@@ -327,6 +327,7 @@ export function renderAdminView(container) {
     const items = [
       { id: 'links', label: 'จัดการลิงก์ระบบงาน', icon: 'link-2', badge: 'CRUD' },
       { id: 'reports', label: 'รายงานปัญหาลิงก์', icon: 'flag', badge: pendingReportsCount > 0 ? `${pendingReportsCount} ใหม่` : '' },
+      { id: 'analytics', label: 'สถิติ & สำรองข้อมูล', icon: 'bar-chart-2', badge: 'Power' },
       { id: 'branding', label: 'แบนเนอร์ & โลโก้ รร.', icon: 'image', badge: 'Drive' },
       { id: 'announcement', label: 'ข้อความประกาศด่วน', icon: 'bell', badge: '' },
       { id: 'settings', label: 'การเชื่อมต่อ & รหัส PIN', icon: 'settings', badge: '' }
@@ -364,6 +365,9 @@ export function renderAdminView(container) {
     }
     if (tab === 'reports') {
       return renderReportsTab();
+    }
+    if (tab === 'analytics') {
+      return renderAnalyticsAndBackupTab(state);
     }
     if (tab === 'branding') {
       return renderBrandingTab(state.config);
@@ -560,13 +564,27 @@ export function renderAdminView(container) {
               </div>
             </div>
 
-            <!-- Service Link Status Selector -->
-            <div class="sm:col-span-2 min-w-0">
+            <!-- Service Link Status Selector & Priority -->
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-purple-200 mb-1">สถานะระบบงาน *</label>
               <select id="field-link-status" class="w-full min-w-0 px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none">
                 <option value="active" ${!editingLink || editingLink.status !== 'maintenance' ? 'selected' : ''}>พร้อมใช้งาน (Active) - บุคลากรเข้าถึงได้ปกติ</option>
                 <option value="maintenance" ${editingLink && editingLink.status === 'maintenance' ? 'selected' : ''}>ปิดปรับปรุงชั่วคราว (Maintenance) - แสดงป้ายเตือนก่อนเข้าใช้งาน</option>
               </select>
+            </div>
+
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-purple-200 mb-1">ลำดับความสำคัญ (Priority: 0 - 999)</label>
+              <input 
+                type="number" 
+                id="field-link-priority" 
+                min="0" 
+                max="999" 
+                value="${editingLink && editingLink.priority !== undefined ? editingLink.priority : 0}" 
+                placeholder="0 (ค่าเริ่มต้น)" 
+                class="w-full min-w-0 px-3.5 py-2.5 rounded-xl bg-purple-900/40 border border-pink-500/25 text-purple-100 text-xs sm:text-sm focus:border-pink-500 focus:outline-none font-mono"
+              />
+              <span class="text-[10px] text-purple-300/60 block mt-0.5">ตัวเลขยิ่งมาก ยิ่งแสดงผลเป็นลำดับแรกในการ์ด (เช่น 10 มาก่อน 0)</span>
             </div>
 
             <div class="sm:col-span-2 flex items-center justify-end gap-2 pt-2">
@@ -682,6 +700,13 @@ export function renderAdminView(container) {
                           <span class="text-[10px] px-2 py-0.5 rounded-full ${item.status === 'maintenance' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'} font-medium border whitespace-nowrap flex items-center gap-1">
                             <i data-lucide="${item.status === 'maintenance' ? 'wrench' : 'check'}" class="w-2.5 h-2.5"></i>
                             <span>${item.status === 'maintenance' ? 'ปิดปรับปรุง' : 'พร้อมใช้งาน'}</span>
+                          </span>
+                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 font-mono border border-indigo-500/25 whitespace-nowrap" title="ลำดับความสำคัญ (Priority)">
+                            P:${item.priority || 0}
+                          </span>
+                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-300 font-mono border border-orange-500/25 whitespace-nowrap flex items-center gap-1" title="สถิติจำนวนครั้งที่คลิก">
+                            <span>🔥</span>
+                            <span>${item.clicks || 0} คลิก</span>
                           </span>
                           <span class="text-[9px] font-mono text-purple-300/50 ml-auto sm:ml-0">
                             #${item.rowIndex}
@@ -882,6 +907,213 @@ export function renderAdminView(container) {
       isLoadingReports = false;
       update();
     }
+  }
+
+  // --- TAB 3: Analytics & Backup ---
+  function renderAnalyticsAndBackupTab(state) {
+    const { links, config } = state;
+
+    // Metrics calculations
+    const totalClicks = links.reduce((sum, item) => sum + (parseInt(item.clicks, 10) || 0), 0);
+    const activeCount = links.filter(item => item.status !== 'maintenance').length;
+    const maintenanceCount = links.filter(item => item.status === 'maintenance').length;
+
+    // Sort links by clicks descending for top ranking
+    const sortedByClicks = [...links]
+      .filter(item => (parseInt(item.clicks, 10) || 0) > 0)
+      .sort((a, b) => (parseInt(b.clicks, 10) || 0) - (parseInt(a.clicks, 10) || 0));
+
+    const topApps = sortedByClicks.slice(0, 5);
+
+    const rankMedals = ['🥇 อันดับ 1', '🥈 อันดับ 2', '🥉 อันดับ 3', 'อันดับ 4', 'อันดับ 5'];
+    const rankColors = [
+      'bg-amber-500/20 text-amber-300 border-amber-500/40',
+      'bg-slate-300/20 text-slate-200 border-slate-300/40',
+      'bg-orange-500/20 text-orange-300 border-orange-500/40',
+      'bg-purple-900/40 text-purple-300 border-purple-500/30',
+      'bg-purple-900/40 text-purple-300 border-purple-500/30'
+    ];
+
+    return `
+      <div class="space-y-6">
+        
+        <!-- Header -->
+        <div class="glass-panel p-4 sm:p-5 rounded-3xl border border-pink-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-purple-100 flex items-center gap-2">
+              <i data-lucide="bar-chart-2" class="w-5 h-5 text-pink-400"></i>
+              <span>สถิติการใช้งาน & การสำรองข้อมูล (Analytics & Backup)</span>
+            </h2>
+            <p class="text-xs text-purple-300/70 mt-0.5">
+              ตรวจสอบความนิยมของระบบงานบริการ และดาวน์โหลด/กู้คืนฐานข้อมูล Google Sheets
+            </p>
+          </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          
+          <div class="glass-panel p-4 rounded-2xl border border-pink-500/20">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-purple-300/70">ยอดคลิกทั้งหมด</span>
+              <div class="w-8 h-8 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center">
+                <i data-lucide="flame" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-orange-400 mt-2 font-mono">
+              ${totalClicks.toLocaleString()}
+            </div>
+            <p class="text-[11px] text-purple-300/50 mt-1">ครั้งที่มีการเปิดใช้งาน</p>
+          </div>
+
+          <div class="glass-panel p-4 rounded-2xl border border-pink-500/20">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-purple-300/70">ระบบงานทั้งหมด</span>
+              <div class="w-8 h-8 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center">
+                <i data-lucide="layers" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-pink-300 mt-2 font-mono">
+              ${links.length}
+            </div>
+            <p class="text-[11px] text-purple-300/50 mt-1">บริการใน Google Sheet</p>
+          </div>
+
+          <div class="glass-panel p-4 rounded-2xl border border-pink-500/20">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-purple-300/70">พร้อมใช้งาน</span>
+              <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-emerald-300 mt-2 font-mono">
+              ${activeCount}
+            </div>
+            <p class="text-[11px] text-purple-300/50 mt-1">สถานะ Active</p>
+          </div>
+
+          <div class="glass-panel p-4 rounded-2xl border border-pink-500/20">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-purple-300/70">ปิดปรับปรุง</span>
+              <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <i data-lucide="wrench" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-2 font-mono">
+              ${maintenanceCount}
+            </div>
+            <p class="text-[11px] text-purple-300/50 mt-1">สถานะ Maintenance</p>
+          </div>
+
+        </div>
+
+        <!-- Top 5 Most Clicked Services Ranking -->
+        <div class="glass-panel p-4 sm:p-6 rounded-3xl border border-pink-500/20 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-pink-500/15">
+            <div>
+              <h3 class="text-sm sm:text-base font-bold text-purple-100 flex items-center gap-2">
+                <span>🔥 อันดับระบบงานยอดนิยม (Top 5 Most Popular)</span>
+              </h3>
+              <p class="text-xs text-purple-300/70 mt-0.5">
+                เรียงลำดับจากจำนวนการคลิกเปิดใช้งานจริงของนักเรียน ครู และผู้ปกครอง
+              </p>
+            </div>
+          </div>
+
+          ${topApps.length === 0 ? `
+            <div class="py-8 text-center text-purple-300/60 text-xs">
+              ยังไม่มีข้อมูลการคลิกใช้งานในขณะนี้ ระบบจะเริ่มบันทึกและแสดงอันดับเมื่อมีผู้ใช้งานแตะเปิดลิงก์
+            </div>
+          ` : `
+            <div class="space-y-3">
+              ${topApps.map((item, idx) => {
+                const percent = totalClicks > 0 ? Math.round(((item.clicks || 0) / totalClicks) * 100) : 0;
+                return `
+                  <div class="p-3.5 rounded-2xl bg-purple-950/40 border border-pink-500/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <span class="text-xs px-2.5 py-1 rounded-xl font-bold border ${rankColors[idx] || rankColors[4]} whitespace-nowrap">
+                        ${rankMedals[idx] || (idx + 1)}
+                      </span>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h4 class="text-xs sm:text-sm font-bold text-purple-100">${escapeHtml(item.systemName)}</h4>
+                          <span class="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/25">
+                            ${escapeHtml(item.group)}
+                          </span>
+                        </div>
+                        <!-- Progress bar -->
+                        <div class="w-full bg-purple-900/40 h-2 rounded-full mt-2 overflow-hidden border border-pink-500/10">
+                          <div class="bg-gradient-to-r from-orange-500 to-pink-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%;"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="text-right flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-pink-500/10">
+                      <div class="text-xs sm:text-sm font-extrabold text-orange-400 font-mono flex items-center gap-1">
+                        <span>${(item.clicks || 0).toLocaleString()} คลิก</span>
+                      </div>
+                      <span class="text-[10px] text-purple-300/60 font-mono">${percent}% ของยอดรวม</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+
+        <!-- Backup & Restore Operations -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          
+          <!-- Card 1: Export JSON Backup -->
+          <div class="glass-panel p-5 sm:p-6 rounded-3xl border border-pink-500/20 flex flex-col justify-between space-y-4">
+            <div>
+              <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center mb-3 border border-indigo-500/30">
+                <i data-lucide="download-cloud" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-sm sm:text-base font-bold text-purple-100">สำรองข้อมูลระบบ (Export Backup)</h3>
+              <p class="text-xs text-purple-300/70 mt-1 leading-relaxed">
+                ดาวน์โหลดข้อมูลลิงก์ระบบงานทั้งหมด (${links.length} รายการ), โลโก้, แบนเนอร์, ข้อความประกาศ และสถิติการใช้งาน เก็บไว้เป็นไฟล์ JSON สำหรับความปลอดภัย
+              </p>
+            </div>
+
+            <button 
+              id="btn-export-backup"
+              class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>ดาวน์โหลดไฟล์สำรอง (.json)</span>
+            </button>
+          </div>
+
+          <!-- Card 2: Restore JSON Backup -->
+          <div class="glass-panel p-5 sm:p-6 rounded-3xl border border-pink-500/20 flex flex-col justify-between space-y-4">
+            <div>
+              <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-300 flex items-center justify-center mb-3 border border-amber-500/30">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-sm sm:text-base font-bold text-purple-100">กู้คืนข้อมูลระบบ (Restore Backup)</h3>
+              <p class="text-xs text-purple-300/70 mt-1 leading-relaxed">
+                นำเข้าไฟล์สำรอง (.json) ที่เคยบันทึกไว้ เพื่อแทนที่และกู้คืนข้อมูลทุกลิงก์และโครงสร้างใน Google Sheets อย่างปลอดภัย
+              </p>
+            </div>
+
+            <div>
+              <input type="file" id="input-restore-backup-file" accept=".json" class="hidden" />
+              <button 
+                type="button"
+                id="btn-trigger-restore-backup"
+                class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-amber-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              >
+                <i data-lucide="folder-up" class="w-4 h-4"></i>
+                <span id="label-restore-backup-text">เลือกไฟล์ JSON เพื่อกู้คืน</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
   }
 
   // --- TAB 3: Branding (Logo, Banner, Names) ---
@@ -1140,22 +1372,13 @@ export function renderAdminView(container) {
       bindLinksTabEvents();
     } else if (activeTab === 'reports') {
       bindReportsTabEvents();
-    }
-      bindLinksTabEvents();
-    }
-
-    // 7. Tab 2 Specific Events: Branding
-    if (activeTab === 'branding') {
+    } else if (activeTab === 'analytics') {
+      bindAnalyticsTabEvents(state);
+    } else if (activeTab === 'branding') {
       bindBrandingTabEvents();
-    }
-
-    // 8. Tab 3 Specific Events: Announcement
-    if (activeTab === 'announcement') {
+    } else if (activeTab === 'announcement') {
       bindAnnouncementTabEvents();
-    }
-
-    // 9. Tab 4 Specific Events: Settings
-    if (activeTab === 'settings') {
+    } else if (activeTab === 'settings') {
       bindSettingsTabEvents();
     }
   }
@@ -1300,6 +1523,7 @@ export function renderAdminView(container) {
         const rawIconUrl = container.querySelector('#field-link-icon-url').value.trim();
         const iconUrl = normalizeDriveImage(rawIconUrl);
         const status = container.querySelector('#field-link-status')?.value || 'active';
+        const priority = parseInt(container.querySelector('#field-link-priority')?.value, 10) || 0;
 
         const submitBtn = container.querySelector('#btn-save-link-action');
         submitBtn.disabled = true;
@@ -1319,21 +1543,32 @@ export function renderAdminView(container) {
             systemName,
             link,
             iconUrl,
-            status
+            status,
+            priority
           });
 
           // Sync state locally
           if (isEditing) {
             const idx = links.findIndex(l => (linkId && l.id === linkId) || (rowIndex && String(l.rowIndex) === String(rowIndex)));
             if (idx !== -1) {
-              links[idx] = { ...links[idx], group, role, systemName, link, iconUrl, status, id: res.id || links[idx].id || linkId };
+              links[idx] = { 
+                ...links[idx], 
+                group, 
+                role, 
+                systemName, 
+                link, 
+                iconUrl, 
+                status, 
+                priority,
+                id: res.id || links[idx].id || linkId 
+              };
             }
           } else {
             const newId = res.id || ('rru_' + Date.now().toString(36));
             links.push({
               id: newId,
               rowIndex: links.length + 2,
-              group, role, systemName, link, iconUrl, status
+              group, role, systemName, link, iconUrl, status, priority, clicks: 0
             });
           }
           store.set({ links: [...links] });
@@ -1537,6 +1772,126 @@ export function renderAdminView(container) {
         }
       });
     });
+  }
+
+  // --- Analytics & Backup Tab Event Handlers ---
+  function bindAnalyticsTabEvents(state) {
+    // 1. Export JSON Backup
+    const exportBtn = container.querySelector('#btn-export-backup');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        try {
+          const { links, config } = store.get();
+          const backupPayload = {
+            exportDate: new Date().toISOString(),
+            portalVersion: '2.0.0',
+            school: config.schoolName || 'โรงเรียนรัฐราษฎร์อุปถัมภ์',
+            config: { ...config },
+            links: links.map(l => ({
+              id: l.id,
+              role: l.role,
+              group: l.group,
+              systemName: l.systemName,
+              link: l.link,
+              iconUrl: l.rawIconUrl || l.iconUrl,
+              status: l.status || 'active',
+              clicks: parseInt(l.clicks, 10) || 0,
+              priority: parseInt(l.priority, 10) || 0
+            }))
+          };
+
+          const jsonStr = JSON.stringify(backupPayload, null, 2);
+          const blob = new Blob([jsonStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const dateStr = new Date().toISOString().slice(0, 10);
+          a.href = url;
+          a.download = `rru-portal-backup-${dateStr}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          showToast('ดาวน์โหลดไฟล์สำรองข้อมูลสำเร็จเรียบร้อย 💾', 'success');
+        } catch (err) {
+          showToast(`ดาวน์โหลดข้อมูลสำรองล้มเหลว: ${err.message}`, 'error');
+        }
+      });
+    }
+
+    // 2. Restore JSON Backup
+    const triggerRestoreBtn = container.querySelector('#btn-trigger-restore-backup');
+    const restoreFileInput = container.querySelector('#input-restore-backup-file');
+    const labelRestoreText = container.querySelector('#label-restore-backup-text');
+
+    if (triggerRestoreBtn && restoreFileInput) {
+      triggerRestoreBtn.addEventListener('click', () => {
+        restoreFileInput.click();
+      });
+
+      restoreFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const rawContent = event.target.result;
+            const backupData = JSON.parse(rawContent);
+
+            if (!backupData || !Array.isArray(backupData.links)) {
+              throw new Error('โครงสร้างไฟล์ไม่ถูกต้อง (ต้องมีรายการ links เป็น Array)');
+            }
+
+            const linkCount = backupData.links.length;
+            const confirmMsg = `ยืนยันการกู้คืนข้อมูลสำรองหรือไม่?\n\n• ระบบงานที่จะถูกกู้คืน: ${linkCount} รายการ\n• ข้อมูลลิงก์ปัจจุบันใน Google Sheets จะถูกแทนที่ด้วยข้อมูลจากไฟล์สำรองนี้\n\nกด "ตกลง (OK)" เพื่อดำเนินการต่อ`;
+            
+            if (!confirm(confirmMsg)) {
+              restoreFileInput.value = '';
+              return;
+            }
+
+            triggerRestoreBtn.disabled = true;
+            if (labelRestoreText) labelRestoreText.textContent = 'กำลังกู้คืนข้อมูลขึ้น Google Sheets...';
+            showToast('กำลังกู้คืนข้อมูลไปยัง Google Sheets...', 'info', 10000);
+
+            const { adminPin } = store.get();
+            const res = await callGasApi('restoreBackup', {
+              pin: adminPin,
+              backupData: backupData
+            });
+
+            // Update store state with restored links and config
+            const restoredLinks = backupData.links.map((item, idx) => ({
+              id: item.id || ('rru_' + Date.now().toString(36) + '_' + (idx + 1)),
+              rowIndex: idx + 2,
+              role: item.role || 'all',
+              group: item.group || 'กลุ่มบริหารทั่วไป',
+              systemName: item.systemName || '',
+              link: item.link || '#',
+              iconUrl: normalizeDriveImage(item.iconUrl || item.rawIconUrl || ''),
+              rawIconUrl: item.iconUrl || item.rawIconUrl || '',
+              status: item.status || 'active',
+              clicks: parseInt(item.clicks, 10) || 0,
+              priority: parseInt(item.priority, 10) || 0
+            }));
+
+            const nextConfig = backupData.config ? { ...store.get().config, ...backupData.config } : store.get().config;
+
+            store.set({ links: restoredLinks, config: nextConfig });
+            showToast(res.message || `กู้คืนข้อมูลสำรองสำเร็จ (${linkCount} ระบบงาน)`, 'success');
+            update();
+          } catch (err) {
+            showToast(`กู้คืนข้อมูลสำรองไม่สำเร็จ: ${err.message}`, 'error');
+          } finally {
+            triggerRestoreBtn.disabled = false;
+            if (labelRestoreText) labelRestoreText.textContent = 'เลือกไฟล์ JSON เพื่อกู้คืน';
+            restoreFileInput.value = '';
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
   }
 
   // --- Branding Tab Event Handlers ---
