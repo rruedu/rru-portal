@@ -1,11 +1,11 @@
 /**
  * RRU School Portal - Progressive Web App Service Worker
- * Version: v3.3.0 (Security Hardening & Enforce Custom PIN)
+ * Version: v3.4.0 (Fix Light Theme Subtitle & Transparent Logo Background)
  */
 
-const STATIC_CACHE = 'rru-static-v3-3';
-const API_CACHE = 'rru-api-v3-3';
-const RUNTIME_CACHE = 'rru-runtime-v3-3';
+const STATIC_CACHE = 'rru-static-v3-4';
+const API_CACHE = 'rru-api-v3-4';
+const RUNTIME_CACHE = 'rru-runtime-v3-4';
 
 const PRECACHE_ASSETS = [
   './',

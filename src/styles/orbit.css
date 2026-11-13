@@ -77,6 +77,10 @@ html.light .center-hub {
   box-shadow: 0 0 30px rgba(217, 70, 239, 0.3) !important;
 }
 
+html.light .pulse-halo {
+  border-color: rgba(217, 70, 239, 0.4) !important;
+}
+
 .center-hub:hover {
   transform: scale(1.06);
   box-shadow: 

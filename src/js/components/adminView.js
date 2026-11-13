@@ -230,7 +230,7 @@ export function renderAdminView(container) {
               <!-- Sidebar School Header -->
               <div class="flex items-center gap-3 pb-4 border-b border-pink-500/15">
                 <div class="w-10 h-10 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-pink-500 to-purple-600 flex-shrink-0">
-                  <img src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" alt="Logo" class="w-full h-full object-cover rounded-full bg-slate-900" />
+                  <img src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" alt="Logo" class="w-full h-full object-contain rounded-full bg-white dark:bg-purple-950/80 p-0.5" />
                 </div>
                 <div class="leading-tight">
                   <p class="text-xs font-bold text-purple-100">ผู้ดูแลระบบ</p>
@@ -1134,7 +1134,7 @@ export function renderAdminView(container) {
           </h3>
           <div class="flex flex-col sm:flex-row items-center gap-5">
             <div class="w-24 h-24 rounded-3xl overflow-hidden p-1 bg-gradient-to-tr from-pink-500 to-purple-600 flex-shrink-0 shadow-lg">
-              <img id="logo-preview-img" src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" alt="Logo" class="w-full h-full object-cover rounded-2xl bg-slate-900" />
+              <img id="logo-preview-img" src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" alt="Logo" class="w-full h-full object-contain rounded-2xl bg-white dark:bg-purple-950/80 p-1" />
             </div>
             <div class="flex-1 w-full space-y-2">
               <input type="file" id="input-upload-logo" accept="image/*" class="text-xs text-purple-200 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-gradient-to-r file:from-pink-500 file:to-purple-600 file:text-white hover:file:opacity-90 cursor-pointer" />

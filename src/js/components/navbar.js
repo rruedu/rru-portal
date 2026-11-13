@@ -50,7 +50,7 @@ export function renderNavbar(container) {
                     <img 
                       src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" 
                       alt="${escapeHtml(config.schoolName)}" 
-                      class="w-full h-full object-cover rounded-full bg-slate-900"
+                      class="w-full h-full object-contain rounded-full bg-white dark:bg-purple-950/80 p-0.5"
                       onerror="this.src='${CONFIG.SCHOOL.logoDefault}'"
                     />
                   </div>

@@ -85,7 +85,7 @@ export function renderOrbitHero(container) {
               เลือกกลุ่มบริหารเพื่อเข้าใช้งาน
             </span>
           </h2>
-          <p class="text-xs sm:text-sm text-purple-200/80 mt-1 max-w-sm mx-auto">
+          <p class="text-xs sm:text-sm text-purple-200/80 dark:text-purple-200/80 text-slate-600 mt-1 max-w-sm mx-auto font-medium transition-colors">
             แตะที่กลุ่มฝ่ายเพื่อดูระบบงานและบริการออนไลน์ทั้งหมด
           </p>
         </div>
@@ -100,11 +100,11 @@ export function renderOrbitHero(container) {
           <!-- Central School Emblem Node -->
           <div class="center-hub group" id="center-hub-node" title="โรงเรียนรัฐราษฎร์อุปถัมภ์">
             <div class="pulse-halo"></div>
-            <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 mb-0.5 shadow-inner">
+            <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden p-1 bg-white dark:bg-purple-950/80 mb-0.5 shadow-md flex items-center justify-center border border-pink-500/25">
               <img 
                 src="${config.logoUrl || CONFIG.SCHOOL.logoDefault}" 
                 alt="RRU" 
-                class="w-full h-full object-cover rounded-full bg-slate-900 group-hover:scale-105 transition-transform"
+                class="w-full h-full object-contain rounded-full bg-white dark:bg-transparent group-hover:scale-105 transition-transform"
                 onerror="this.src='${CONFIG.SCHOOL.logoDefault}'"
               />
             </div>

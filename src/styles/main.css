@@ -191,13 +191,16 @@ html.light .text-purple-300 {
 html.light .text-purple-400 {
   color: #64748b !important;
 }
+html.light .text-purple-200\/90,
+html.light .text-purple-200\/80,
 html.light .text-purple-200\/70,
+html.light p.text-purple-200\/80,
 html.light .text-purple-300\/80,
 html.light .text-purple-300\/70,
 html.light .text-purple-300\/60,
 html.light .text-purple-300\/50,
 html.light .text-purple-300\/40 {
-  color: #64748b !important;
+  color: #475569 !important;
   opacity: 1 !important;
 }
 
@@ -219,6 +222,12 @@ html.light .bg-purple-900\/20,
 html.light .bg-purple-950,
 html.light .bg-purple-900 {
   background-color: #f8fafc !important;
+}
+
+html.light .bg-slate-900,
+html.light .center-hub img,
+html.light #nav-brand img {
+  background-color: #ffffff !important;
 }
 
 html.light .bg-pink-500\/10,
@@ -309,13 +318,17 @@ html.light .orbit-node:hover {
 html.light .orbit-node span {
   color: #1e1b4b !important;
 }
-html.light #center-hub {
+html.light #center-hub,
+html.light #center-hub-node,
+html.light .center-hub {
   background-color: #ffffff !important;
   border-color: rgba(219, 39, 119, 0.3) !important;
   box-shadow: 0 10px 30px rgba(124, 58, 237, 0.12) !important;
 }
-html.light #center-hub span {
-  color: #1e1b4b !important;
+html.light #center-hub span,
+html.light #center-hub-node span,
+html.light .center-hub span {
+  color: #db2777 !important;
 }
 
 /* Floating Action Button (FAB) */
