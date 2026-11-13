@@ -34,9 +34,11 @@ export function renderDepartmentGrid(container) {
     }
 
     let filteredLinks = links.filter(item => {
+      const linkId = String(item.id || ('rru_link_' + item.rowIndex));
+
       // Role filter
       if (isFavView) {
-        if (!favorites.includes(item.id)) return false;
+        if (!favorites.includes(linkId)) return false;
       } else if (activeRole !== 'all') {
         const matchRole = item.role === 'all' || item.role === activeRole;
         if (!matchRole) return false;
@@ -155,7 +157,10 @@ export function renderDepartmentGrid(container) {
         <!-- Cards Grid (2 Columns on Mobile, Up to 5 on Desktop) -->
         ${filteredLinks.length > 0 ? `
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
-            ${filteredLinks.map((link, idx) => renderServiceCard(link, targetDept, isAdmin, idx, favorites.includes(link.id), popularIds.has(link.id))).join('')}
+            ${filteredLinks.map((link, idx) => {
+              const linkId = String(link.id || ('rru_link_' + (link.rowIndex || idx + 2)));
+              return renderServiceCard(link, targetDept, isAdmin, idx, favorites.includes(linkId), popularIds.has(link.id) || popularIds.has(linkId));
+            }).join('')}
           </div>
 
           <!-- Single Clean Bottom Return to Hub Button -->
@@ -228,6 +233,7 @@ export function renderDepartmentGrid(container) {
         e.preventDefault();
         e.stopPropagation();
         const favId = btn.dataset.favId;
+        if (!favId || favId === 'undefined') return;
         const isNowFav = store.toggleFavorite(favId);
         showToast(isNowFav ? 'บันทึกลงรายการโปรดเรียบร้อยแล้ว ⭐' : 'นำออกจากรายการโปรดแล้ว', 'info');
       });
@@ -316,13 +322,14 @@ export function renderDepartmentGrid(container) {
     const roleLabel = roleLabels[link.role] || 'ทั่วไป';
     const iconUrl = normalizeDriveImage(link.iconUrl || link.icon_url || '');
     const isMaintenance = link.status === 'maintenance';
+    const linkId = String(link.id || ('rru_link_' + (link.rowIndex || index + 2)));
 
     return `
       <a 
         href="${escapeHtml(link.link)}" 
         target="_blank" 
         rel="noopener noreferrer" 
-        data-id="${link.id || ''}"
+        data-id="${linkId}"
         data-row-index="${link.rowIndex || ''}"
         data-status="${isMaintenance ? 'maintenance' : 'active'}"
         data-system-name="${escapeHtml(link.systemName)}"
@@ -350,7 +357,7 @@ export function renderDepartmentGrid(container) {
           <div class="flex items-center gap-1 flex-shrink-0" onclick="event.stopPropagation();">
             <!-- Favorite Star Button -->
             <button 
-              data-fav-id="${link.id}" 
+              data-fav-id="${linkId}" 
               class="btn-toggle-favorite p-1 sm:p-1.5 rounded-lg border transition-all cursor-pointer ${
                 isFavorite 
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' 
@@ -363,7 +370,7 @@ export function renderDepartmentGrid(container) {
 
             <!-- Report Broken Link Button -->
             <button 
-              data-report-id="${link.id}" 
+              data-report-id="${linkId}" 
               data-system-name="${escapeHtml(link.systemName)}" 
               data-link="${escapeHtml(link.link)}"
               class="btn-card-report p-1 sm:p-1.5 rounded-lg bg-purple-900/30 text-purple-300/50 hover:text-pink-300 border border-purple-500/20 hover:border-pink-500/30 transition-all cursor-pointer"

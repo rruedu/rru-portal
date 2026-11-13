@@ -8,7 +8,12 @@ class StateStore {
     if (typeof localStorage !== 'undefined') {
       try {
         const raw = localStorage.getItem('rru_favorites');
-        if (raw) savedFavorites = JSON.parse(raw);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            savedFavorites = parsed.filter(id => id && id !== 'undefined' && id !== 'null' && String(id).trim() !== '');
+          }
+        }
       } catch (e) {}
     }
 
@@ -146,23 +151,22 @@ class StateStore {
 
   setActiveRole(role) {
     if (role === 'favorites') {
-      // When clicking favorites, transition to department/list view if on hub
-      if (this.state.currentView === 'hub') {
-        this.set({ activeRole: role, currentView: 'department', activeDepartment: null });
-        return;
-      }
+      // Transition to department/list view showing all favorites across all departments
+      this.set({ activeRole: role, currentView: 'department', activeDepartment: null, searchQuery: '' });
+      return;
     }
     this.set({ activeRole: role });
   }
 
   toggleFavorite(linkId) {
-    if (!linkId) return false;
-    let favs = [...(this.state.favorites || [])];
-    const exists = favs.includes(linkId);
+    if (!linkId || linkId === 'undefined' || linkId === 'null') return false;
+    const cleanId = String(linkId).trim();
+    let favs = [...(this.state.favorites || [])].filter(id => id && id !== 'undefined' && id !== 'null' && String(id).trim() !== '');
+    const exists = favs.includes(cleanId);
     if (exists) {
-      favs = favs.filter(id => id !== linkId);
+      favs = favs.filter(id => id !== cleanId);
     } else {
-      favs.push(linkId);
+      favs.push(cleanId);
     }
     this.set({ favorites: favs });
     if (typeof localStorage !== 'undefined') {
@@ -174,7 +178,8 @@ class StateStore {
   }
 
   isFavorite(linkId) {
-    return Boolean(this.state.favorites && this.state.favorites.includes(linkId));
+    if (!linkId || linkId === 'undefined' || linkId === 'null') return false;
+    return Boolean(this.state.favorites && this.state.favorites.includes(String(linkId)));
   }
 
   incrementClick(linkId) {

@@ -41,8 +41,20 @@ export async function fetchPortalData() {
     const json = await res.json();
 
     if (json.success && Array.isArray(json.links)) {
+      const normalizedLinks = json.links.map((item, idx) => {
+        const fallbackId = 'rru_link_' + (item.rowIndex || idx + 2);
+        return {
+          ...item,
+          id: String(item.id || fallbackId),
+          rowIndex: item.rowIndex || idx + 2,
+          status: item.status || 'active',
+          clicks: parseInt(item.clicks, 10) || 0,
+          priority: parseInt(item.priority, 10) || 0
+        };
+      });
+
       return {
-        links: json.links,
+        links: normalizedLinks,
         config: json.config
       };
     }

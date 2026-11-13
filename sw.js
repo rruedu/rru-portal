@@ -1,11 +1,11 @@
 /**
  * RRU School Portal - Progressive Web App Service Worker
- * Version: v3.0.0 (Phase 3 Power Tools Upgrade)
+ * Version: v3.1.0 (Favorites Resilient Fallback Fix)
  */
 
-const STATIC_CACHE = 'rru-static-v3';
-const API_CACHE = 'rru-api-v3';
-const RUNTIME_CACHE = 'rru-runtime-v3';
+const STATIC_CACHE = 'rru-static-v3-1';
+const API_CACHE = 'rru-api-v3-1';
+const RUNTIME_CACHE = 'rru-runtime-v3-1';
 
 const PRECACHE_ASSETS = [
   './',
